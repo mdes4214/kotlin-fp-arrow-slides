@@ -376,15 +376,92 @@ fun main() {
 ### 2. Domain Modeling
 ### with ADT
 
+--
+
+### TODO #1
+
+```
+- Top Type: Any
+    - The root of the Kotlin class hierarchy. Every Kotlin class has Any as a superclass.
+- Bottom Type: Nothing
+    - Nothing is used to represent a value which will never exist.
+    - Functions throwing exception directly
+- Unit
+    - Unit is exactly equivalent to the void type in Java.
+    - Functions that return Unit can indicate a side effect inside.
+```
+
+--
+
+### TODO #2
+
+```
+- Readability and Type Safety
+- Inline Class
+- Type Alias
+- ADT (Algebraic Data Type)
+- Product Type: data class
+- Sum Type: enum class, sealed class
+```
+
 ---
 
 ### 3. Data Ops
 ### with @Optics
 
+--
+
+### TODO
+
+```
+- Immutability
+- Deep Ops in data class
+- @Optics
+- Lens
+- Prism
+- Optional
+- Every
+- Iso: isomorphism
+```
+
 ---
 
 ### 4. Error Handling
 ### with Either & Validated
+
+--
+
+### TODO #1
+
+```
+- Either<L, R>
+- Evaluation: fold
+- Composition
+    - flatMap
+    - either.eager {} with bind
+    - zip
+- 3rd Party Error: Either.catch, mapLeft
+- Short circuit on error
+- Flatten
+    - traverseEither 
+    - Collection<Either<E, A>> => Either<E, Collection<A>>
+- fromNullable
+```
+
+--
+
+### TODO #2
+
+```
+- Validated
+- ValidatedNel
+- zip
+- Accumulate invalid cases
+- Flatten
+    - traverseValidated 
+    - Collection<ValidatedNel<E, A>> => ValidatedNel<E, Collection<A>>
+- fromNullable
+```
 
 ---
 
@@ -392,17 +469,86 @@ fun main() {
 ### &
 ### Parallelization
 
+--
+
+### TODO #1
+
+```
+- suspend
+- Continuation
+- either {}
+- runBlocking {}
+- coroutineScope {}: launch, async/await
+- withContext()
+```
+
+--
+
+### TODO #2
+
+```
+- Parallelization
+    - parZip
+    - parTraverse, parTraverseEither, parTraverseValidated
+    - parSequence
+    - raceN
+- Schedule
+    - repeat
+    - retry
+```
 ---
 
 ### 6. Resource
 ### Allocation & Releasing
 
+--
+
+### TODO
+
+```
+- bracket, bracketCase
+- Resource
+- guarantee, guaranteeCase
+- onCancel
+```
+
 ---
 
 ### 7. Kotlin Flow
+
+--
+
+### TODO
+
+```
+- Flow: flow, emit, collect
+- Decouple effects
+- Declarative Programming
+- Cold / Hot Flow
+- Error handling
+- Cancellation
+```
 
 ---
 
 ### 8. Algebras
 ### &
 ### Dependency Injection
+
+--
+
+### TODO
+
+```
+- Edge of the World
+- OO-FP-OO sandwich
+- Algebras
+    - interface
+    - sealed class
+- Dependency Injection
+    - Explicit, Implicit
+    - extension function, scope, receiver
+- Program to an interface, not an implementation.
+- PBT (Property-Based Testing): corner test cases
+```
+
