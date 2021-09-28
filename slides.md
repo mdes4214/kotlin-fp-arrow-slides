@@ -339,6 +339,10 @@ fun main() {
 
 ### Infix Function
 
+- member functions / extension functions
+- single parameter
+- not accept variable number of arguments, and no default value
+
 ```Kotlin=
 infix fun Int.add(y: Int) = this + y
 
