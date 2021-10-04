@@ -8,8 +8,7 @@ title: "Kotlin FP with Arrow"
 
 ---
 
-### Kotlin FP
-### with Arrow-kt.io
+### 1. Functional Programming
 
 <style>
 pre {
@@ -48,38 +47,11 @@ p {
 }
 </style>
 
----
-
-Jack Lo
-
-
-![](img/photo.png)
-
-
----
-
-### Outline
-
-1. Functional Programming
-2. Domain Modeling with ADT
-3. Data Ops with @Optics
-4. Error Handling with Either & Validated
-5. Kotlin Coroutine & Parallelization
-6. Resource Allocation & Releasing
-7. Kotlin Flow
-8. Algebras & Dependency Injection
-
 --
 
-- https://kotlinlang.org/docs/home.html
-- https://arrow-kt.io/
-- https://play.kotlinlang.org/
+[return to Outline](../../export/#/2)
 
 ---
-
-### 1. Functional Programming
-
---
 
 - Pure Function
 - Deterministic
@@ -145,10 +117,27 @@ if it can be *replaced* with its corresponding value (and vice-versa)
 
 --
 
+```Kotlin=
+fun square(x: Int) = x * x
+fun squareSum(x: Int, y: Int) = square(x) + square(y)
+
+fun main() {
+  println(squareSum(5, 10))
+  // => square(5) + square(10)
+  // => 5 * 5 + 10 * 10
+  // => 25 + 100
+  // => 125
+}
+```
+
+We can do the substitutions only because the expressions are *equal* to their results.
+
+--
+
 - All functions in mathematics
 - Substitution model - Reduce an expression to a value. ➡️ *λ−calculus*
 
---
+---
 
 ### λ−calculus
 
@@ -207,26 +196,7 @@ fun main() {
 }
 ```
 
---
-
-### Referential Transparency
-
-```Kotlin=
-fun square(x: Int) = x * x
-fun squareSum(x: Int, y: Int) = square(x) + square(y)
-
-fun main() {
-  println(squareSum(5, 10))
-  // => square(5) + square(10)
-  // => 5 * 5 + 10 * 10
-  // => 25 + 100
-  // => 125
-}
-```
-
-We can do the substitutions only because the expressions are *equal* to their results.
-
---
+---
 
 - Functional Programming in Kotlin
 - How Arrow-kt works?
@@ -241,7 +211,9 @@ Function is *first class citizen*
 
 <font size="6">🔍 We can pass them, return them, assign them, ...</font>
 
---
+---
+
+### Functions in Kotlin
 
 https://kotlinlang.org/docs/functions.html
 
@@ -374,185 +346,3 @@ fun main() {
   println(opThenSum(5, 10, ::square))    // 5*5 + 10*10 = 125
 }
 ```
-
----
-
-### 2. Domain Modeling
-### with ADT
-
---
-
-### TODO #1
-
-```
-- Top Type: Any
-    - The root of the Kotlin class hierarchy. Every Kotlin class has Any as a superclass.
-- Bottom Type: Nothing
-    - Nothing is used to represent a value which will never exist.
-    - Functions throwing exception directly
-- Unit
-    - Unit is exactly equivalent to the void type in Java.
-    - Functions that return Unit can indicate a side effect inside.
-```
-
---
-
-### TODO #2
-
-```
-- Readability and Type Safety
-- Inline Class
-- Type Alias
-- ADT (Algebraic Data Type)
-- Product Type: data class
-- Sum Type: enum class, sealed class
-```
-
----
-
-### 3. Data Ops
-### with @Optics
-
---
-
-### TODO
-
-```
-- Immutability
-- Deep Ops in data class
-- @Optics
-- Lens
-- Prism
-- Optional
-- Every
-- Iso: isomorphism
-```
-
----
-
-### 4. Error Handling
-### with Either & Validated
-
---
-
-### TODO #1
-
-```
-- Either<L, R>
-- Evaluation: fold
-- Composition
-    - flatMap
-    - either.eager {} with bind
-    - zip
-- 3rd Party Error: Either.catch, mapLeft
-- Short circuit on error
-- Flatten
-    - traverseEither 
-    - Collection<Either<E, A>> => Either<E, Collection<A>>
-- fromNullable
-```
-
---
-
-### TODO #2
-
-```
-- Validated
-- ValidatedNel
-- zip
-- Accumulate invalid cases
-- Flatten
-    - traverseValidated 
-    - Collection<ValidatedNel<E, A>> => ValidatedNel<E, Collection<A>>
-- fromNullable
-```
-
----
-
-### 5. Kotlin Coroutine
-### &
-### Parallelization
-
---
-
-### TODO #1
-
-```
-- suspend
-- Continuation
-- either {}
-- runBlocking {}
-- coroutineScope {}: launch, async/await
-- withContext()
-```
-
---
-
-### TODO #2
-
-```
-- Parallelization
-    - parZip
-    - parTraverse, parTraverseEither, parTraverseValidated
-    - parSequence
-    - raceN
-- Schedule
-    - repeat
-    - retry
-```
----
-
-### 6. Resource
-### Allocation & Releasing
-
---
-
-### TODO
-
-```
-- bracket, bracketCase
-- Resource
-- guarantee, guaranteeCase
-- onCancel
-```
-
----
-
-### 7. Kotlin Flow
-
---
-
-### TODO
-
-```
-- Flow: flow, emit, collect
-- Decouple effects
-- Declarative Programming
-- Cold / Hot Flow
-- Error handling
-- Cancellation
-```
-
----
-
-### 8. Algebras
-### &
-### Dependency Injection
-
---
-
-### TODO
-
-```
-- Edge of the World
-- OO-FP-OO sandwich
-- Algebras
-    - interface
-    - sealed class
-- Dependency Injection
-    - Explicit, Implicit
-    - extension function, scope, receiver
-- Program to an interface, not an implementation.
-- PBT (Property-Based Testing): corner test cases
-```
-

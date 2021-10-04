@@ -273,10 +273,9 @@
 
 
     
+    <section>
         <section >
-            
-            <h3><a id="user-content-kotlin-fp" class="anchor" href="#kotlin-fp" aria-hidden="true"></a>Kotlin FP</h3>
-<h3><a id="user-content-with-arrow-ktio" class="anchor" href="#with-arrow-ktio" aria-hidden="true"></a>with <a href="http://Arrow-kt.io">Arrow-kt.io</a></h3>
+            <h3><a id="user-content-1-functional-programming" class="anchor" href="#1-functional-programming" aria-hidden="true"></a>1. Functional Programming</h3>
 <style>
 pre {
   background: #303030;
@@ -315,17 +314,14 @@ p {
 </style>
 
             </section>
-    
-
-
-
-    
-        <section >
-            
-            <p>Jack Lo</p>
-<p><img src="img/photo.png" alt=""></p>
+        
+            <section >
+                <p><a href="../../export/#/2">return to Outline</a></p>
 
             </section>
+        
+
+    </section>
     
 
 
@@ -333,26 +329,318 @@ p {
     
     <section>
         <section >
-            <h3><a id="user-content-outline" class="anchor" href="#outline" aria-hidden="true"></a>Outline</h3>
-<ol>
-<li><a href="../ch1/export/">Functional Programming</a></li>
-<li><a href="../ch2/export/">Domain Modeling with ADT</a></li>
-<li><a href="../ch3/export/">Data Ops with @Optics</a></li>
-<li><a href="../ch4/export/">Error Handling with Either &amp; Validated</a></li>
-<li><a href="../ch5/export/">Kotlin Coroutine &amp; Parallelization</a></li>
-<li><a href="../ch6/export/">Resource Allocation &amp; Releasing</a></li>
-<li><a href="../ch7/export/">Kotlin Flow</a></li>
-<li><a href="../ch8/export/">Algebras &amp; Dependency Injection</a></li>
-</ol>
+            <ul>
+<li>Pure Function</li>
+<li>Deterministic</li>
+<li>Referential Transparency</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-pure-function" class="anchor" href="#pure-function" aria-hidden="true"></a>Pure Function</h3>
+<h4><a id="user-content-️-no-side-effect" class="anchor" href="#️-no-side-effect" aria-hidden="true"></a>➡️ No <em>Side Effect</em></h4>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-side-effect" class="anchor" href="#side-effect" aria-hidden="true"></a>Side Effect</h3>
+<p><font size="6">🔍 A side effect is when a function relies on, or modifies something <em>outside</em> its scope and parameters to do something.</font></p>
+<ul>
+<li>DB Ops</li>
+<li>Logging</li>
+<li>System I/O</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-Kotlin=">data class Record(val id: String, val cmmnt: String)
+class RecordDB {
+  fun save(record: Record): Unit { /*Insert or update the record to DB*/ }
+}
+val recordDB = RecordDB()
+
+fun updateRecord(record: Record, cmmnt: String): Record {
+  val updatedRecord = record.copy(cmmnt = cmmnt)
+  recordDB.save(updatedRecord) // Side Effect!!
+  return updatedRecord
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-deterministic" class="anchor" href="#deterministic" aria-hidden="true"></a>Deterministic</h3>
+<h4><a id="user-content-️-same-input-same-output" class="anchor" href="#️-same-input-same-output" aria-hidden="true"></a>➡️ Same input, same output</h4>
+<pre><code class="language-Kotlin=">fun sum(num1: Int, num2: Int): Int = num1 + num2
+
+fun main() {
+  println(sum(1, 2)) // 3
+  println(sum(1, 2)) // 3
+  println(sum(1, 2)) // 3
+  // ...
+  // if inputs are 1 and 2, then the sum() always return 3
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-referential-transparency" class="anchor" href="#referential-transparency" aria-hidden="true"></a>Referential Transparency</h3>
+<p><font size="6">🔍 An expression is called referentially transparent</p>
+<p>if it can be <em>replaced</em> with its corresponding value (and vice-versa)</p>
+<p><em>without</em> changing the program’s behavior.</font></p>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-Kotlin=">fun square(x: Int) = x * x
+fun squareSum(x: Int, y: Int) = square(x) + square(y)
+
+fun main() {
+  println(squareSum(5, 10))
+  // =&gt; square(5) + square(10)
+  // =&gt; 5 * 5 + 10 * 10
+  // =&gt; 25 + 100
+  // =&gt; 125
+}
+</code></pre>
+<p>We can do the substitutions only because the expressions are <em>equal</em> to their results.</p>
 
             </section>
         
             <section >
                 <ul>
-<li><a href="https://kotlinlang.org/docs/home.html">https://kotlinlang.org/docs/home.html</a></li>
-<li><a href="https://arrow-kt.io/">https://arrow-kt.io/</a></li>
-<li><a href="https://play.kotlinlang.org/">https://play.kotlinlang.org/</a></li>
+<li>All functions in mathematics</li>
+<li>Substitution model - Reduce an expression to a value. ➡️ <em>λ−calculus</em></li>
 </ul>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-λ−calculus" class="anchor" href="#λ−calculus" aria-hidden="true"></a>λ−calculus</h3>
+<p><font size="6">🔍 A formal system in mathematical logic for expressing computation based on <em>function abstraction</em> and application using <em>variable binding and substitution</em>.</font></p>
+<pre><code class="language-Kotlin=">// 1st simplification: rewritten in Anonymous Form
+
+square_sum(x, y) = x^2 + y^2
+=&gt;
+(x, y) -&gt; x^2 + y^2
+
+id(x) = x
+=&gt;
+x -&gt; x
+</code></pre>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-Kotlin=">// 2nd simplification:
+// the lambda calculus only uses functions of a Single Input
+
+square_sum(x, y) = x^2 + y^2
+=&gt;
+(x, y) -&gt; x^2 + y^2
+=&gt;
+x -&gt; (y -&gt; x^2 + y^2) // identical to: x -&gt; y -&gt; x^2 + y^2 
+// NOTE the last line
+</code></pre>
+<p>Doesn’t it look familiar … ?</p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-curry-" class="anchor" href="#curry-" aria-hidden="true"></a>Curry !!</h3>
+<p><img width="200" src="img/curry.png">  <img width="200" src="img/curry_2.png"></p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-curry-in-kotlin" class="anchor" href="#curry-in-kotlin" aria-hidden="true"></a>Curry in Kotlin</h3>
+<pre><code class="language-Kotlin=">val squareSum: (Int) -&gt; ((Int) -&gt; Int) = { x -&gt; { y -&gt; x*x + y*y }} 
+// x -&gt; (y -&gt; x^2 + y^2)
+val stillSquareSum: (Int) -&gt; (Int) -&gt; Int = { x -&gt; { y -&gt; x*x + y*y }} 
+// x -&gt; y -&gt; x^2 + y^2
+
+val squareSum5: (Int) -&gt; Int = squareSum(5) 
+// x = 5, thus return (y -&gt; 5^2 + y^2)
+
+fun main() {
+  println(squareSum5(10))
+  // y = 10, then get 5^2 + 10^2 = 125
+}
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <ul>
+<li>Functional Programming in Kotlin</li>
+<li>How Arrow-kt works?</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-in-kotlin" class="anchor" href="#in-kotlin" aria-hidden="true"></a>In Kotlin</h3>
+<p>Function is <em>first class citizen</em></p>
+<p>➡️ Functions can be treated like any other variable</p>
+<p><font size="6">🔍 We can pass them, return them, assign them, …</font></p>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-functions-in-kotlin" class="anchor" href="#functions-in-kotlin" aria-hidden="true"></a>Functions in Kotlin</h3>
+<p><a href="https://kotlinlang.org/docs/functions.html">https://kotlinlang.org/docs/functions.html</a></p>
+<ul>
+<li>High Order Function</li>
+<li>Deferred Function</li>
+<li>Extension Function</li>
+<li>Infix Function</li>
+<li>Function Reference</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-high-order-function-1" class="anchor" href="#high-order-function-1" aria-hidden="true"></a>High Order Function #1</h3>
+<pre><code class="language-Kotlin=">// Function is passed as an argument
+fun opThenSum(x: Int, y: Int, op: (Int) -&gt; Int): Int {
+    val result = op(x) + op(y)
+    return result
+}
+
+fun main() {
+  println(opThenSum(5, 10, { it * it })) // 5*5 + 10*10 = 125
+  println(opThenSum(5, 10) { it * it })  // 5*5 + 10*10 = 125
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-high-order-function-2" class="anchor" href="#high-order-function-2" aria-hidden="true"></a>High Order Function #2</h3>
+<pre><code class="language-Kotlin=">// Function returns another function
+fun sumOp(x: Int, y: Int): () -&gt; Int {
+    return { x + y }
+}
+
+fun main() {
+  val sum = sumOp(5, 10) // sum is a function () -&gt; Int
+  println(sum()) // 5 + 10 = 15
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-deferred-function" class="anchor" href="#deferred-function" aria-hidden="true"></a>Deferred Function</h3>
+<pre><code class="language-Kotlin=">fun sumOp(x: Int, y: Int): () -&gt; Int = { x + y } 
+
+fun main() {
+  val sum = sumOp(5, 10) // sum is a function () -&gt; Int
+
+  println(sum()) // 15
+  println(sum()) // 15
+  println(sum()) // 15
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-extension-function-1" class="anchor" href="#extension-function-1" aria-hidden="true"></a>Extension Function #1</h3>
+<pre><code class="language-Kotlin=">class NumOps {
+    fun sum(x: Int, y: Int) = x + y
+}
+fun NumOps.square(x: Int) = x * x
+
+fun main() {
+  val ops = NumOps()
+  println(ops.sum(5, 10)) // 15
+  println(ops.square(5)) // 25
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-extension-function-2" class="anchor" href="#extension-function-2" aria-hidden="true"></a>Extension Function #2</h3>
+<pre><code class="language-Kotlin=">fun ((Int) -&gt; Int).add(y: Int) = { x: Int -&gt; this(x) + y }
+
+val square = { x: Int -&gt; x * x }
+
+fun main() {
+  println(square(5)) // 25
+
+  println(square.add(1)(5)) // 26
+  // x = 5, this(x) = 25, y = 1
+  // 25 + 1 = 26
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-infix-function" class="anchor" href="#infix-function" aria-hidden="true"></a>Infix Function</h3>
+<ul>
+<li>member functions / extension functions</li>
+<li>single parameter</li>
+<li>not accept variable number of arguments, and no default value</li>
+</ul>
+<pre><code class="language-Kotlin=">infix fun Int.add(y: Int) = this + y
+
+fun main() {
+  val x: Int = 5   
+  
+  println(x.add(10)) // 15
+  println(x add 10)  // 15
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-function-reference" class="anchor" href="#function-reference" aria-hidden="true"></a>Function Reference</h3>
+<pre><code class="language-Kotlin=">// Function is passed as an argument
+fun opThenSum(x: Int, y: Int, op: (Int) -&gt; Int): Int {
+    val result = op(x) + op(y)
+    return result
+}
+
+fun square(x: Int) = x * x
+
+fun main() {
+  println(opThenSum(5, 10, { it * it })) // 5*5 + 10*10 = 125
+  println(opThenSum(5, 10) { it * it })  // 5*5 + 10*10 = 125
+  
+  println(opThenSum(5, 10, ::square))    // 5*5 + 10*10 = 125
+}
+</code></pre>
 
             </section>
         
