@@ -67,10 +67,13 @@ Jack Lo
 7. [Kotlin Flow](../ch7/export/)
 8. [Algebras & Dependency Injection](../ch8/export/)
 
---
+---
 
-- https://kotlinlang.org/docs/home.html
-- https://arrow-kt.io/
-- https://play.kotlinlang.org/
+### References
+
+- [https://kotlinlang.org/docs/home.html](https://kotlinlang.org/docs/home.html)
+- [https://arrow-kt.io/](https://arrow-kt.io/)
+- [https://www.47deg.com/technologies/kotlin/](https://www.47deg.com/technologies/kotlin/)
+- [https://play.kotlinlang.org/](https://play.kotlinlang.org/)
 
 

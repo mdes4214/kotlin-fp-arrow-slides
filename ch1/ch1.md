@@ -51,6 +51,12 @@ p {
 
 [return to Outline](../../export/#/2)
 
+--
+
+### References
+
+- [https://ithelp.ithome.com.tw/articles/10235295](https://ithelp.ithome.com.tw/articles/10235295)
+
 ---
 
 - Pure Function
