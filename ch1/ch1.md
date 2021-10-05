@@ -352,3 +352,16 @@ fun main() {
   println(opThenSum(5, 10, ::square))    // 5*5 + 10*10 = 125
 }
 ```
+
+---
+
+### Recap
+
+- Functional Programming
+    - Pure Function ➡️ No *Side Effect*
+    - Deterministic
+    - Referential Transparency
+- λ−calculus & Curry
+- FP in Kotlin
+    - Function is *first class citizen*
+    - High Order Function
