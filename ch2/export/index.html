@@ -317,32 +317,172 @@ p {
             </section>
         
             <section >
-                <p><a href="../../export/#/3">return to Outline</a></p>
+                <p><a href="../../export/#/2">return to Outline</a></p>
 
             </section>
         
             <section >
-                <h3><a id="user-content-todo-1" class="anchor" href="#todo-1" aria-hidden="true"></a>TODO #1</h3>
-<pre><code>- Top Type: Any
-    - The root of the Kotlin class hierarchy. Every Kotlin class has Any as a superclass.
-- Bottom Type: Nothing
-    - Nothing is used to represent a value which will never exist.
-    - Functions throwing exception directly
-- Unit
-    - Unit is exactly equivalent to the void type in Java.
-    - Functions that return Unit can indicate a side effect inside.
+                <h3><a id="user-content-references" class="anchor" href="#references" aria-hidden="true"></a>References</h3>
+<ul>
+<li><a href="http://www.natpryce.com/articles/000818.html">http://www.natpryce.com/articles/000818.html</a></li>
+<li><a href="https://agrawalsuneet.github.io/blogs/difference-between-any-unit-and-nothing-kotlin/">https://agrawalsuneet.github.io/blogs/difference-between-any-unit-and-nothing-kotlin/</a></li>
+</ul>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-kotlin-type-hierarchy" class="anchor" href="#kotlin-type-hierarchy" aria-hidden="true"></a>Kotlin Type Hierarchy</h3>
+<p><img src="img/hierarchy.png" alt=""></p>
+
+            </section>
+        
+            <section >
+                <ul>
+<li>Top Type - <code>Any</code></li>
+<li>Bottom Type - <code>Nothing</code></li>
+<li><code>Unit</code></li>
+</ul>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-any" class="anchor" href="#any" aria-hidden="true"></a>Any</h3>
+<p><font size="6">The root of the Kotlin class hierarchy.</p>
+<p>➡️ Every Kotlin class has <code>Any</code> as a superclass.</font></p>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">fun main() {
+  val num: Int = 5
+  val anyVal: Any = num
+  
+  println(&quot;$anyVal&quot;) // 5
+  println(&quot;${num.plus(10)}&quot;) // 15
+  println(&quot;${anyVal.plus(10)}&quot;) // Error: Unresolved reference
+}
 </code></pre>
 
             </section>
         
             <section >
-                <h3><a id="user-content-todo-2" class="anchor" href="#todo-2" aria-hidden="true"></a>TODO #2</h3>
-<pre><code>- Readability and Type Safety
-- Inline Class
-- Type Alias
-- ADT (Algebraic Data Type)
-- Product Type: data class
-- Sum Type: enum class, sealed class
+                <p><code>Any</code> is <em>similar</em> to the <code>Object</code> class in Java</p>
+<p>➡️ <code>Any</code> only has 3 functions</p>
+<pre><code class="language-kotlin=">fun main() {
+  val anyVal: Any = Any()
+  val anyVal2: Any = Any()
+  val objVal: Object = Object()
+
+  println(&quot;${anyVal::class}&quot;) // class java.lang.Object
+  println(&quot;${objVal::class}&quot;) // class java.lang.Object
+    
+  println(&quot;${anyVal.equals(anyVal2)}&quot;)  // false
+  println(&quot;${anyVal == anyVal2}&quot;)       // false
+  // A.equals(B) is the same as (A == B) if A is a non-null type
+  
+  println(&quot;${anyVal.hashCode()}&quot;) // 87285178
+  
+  println(&quot;${anyVal.toString()}&quot;) // java.lang.Object@533ddba
+  println(&quot;$anyVal&quot;)              // java.lang.Object@533ddba  
+}
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-nothing" class="anchor" href="#nothing" aria-hidden="true"></a>Nothing</h3>
+<p><font size="6"><code>Nothing</code> is used to represent a value which will <em>never exist</em>.</font></p>
+
+            </section>
+        
+            <section >
+                <p>What kinds of expression evaluate to <code>Nothing</code>?</p>
+<ul>
+<li>➡️ Those that perform control flow.</li>
+<li>➡️ <code>throw</code> an exception</li>
+<li>➡️ To represent the <em>absurd scenarios</em>.</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">public inline fun TODO(): Nothing = throw NotImplementedError()
+
+fun doOps(op: String): String = when (op) {
+  &quot;sum&quot; -&gt; &quot;Sum up the values...&quot;
+  &quot;square&quot; -&gt; TODO() // Note the type inference is not broken
+  else -&gt; &quot;Do nothing.&quot;
+}
+
+fun main() {
+  val result: String = doOps(&quot;square&quot;) // kotlin.NotImplementedError: An operation is not implemented.
+  println(&quot;$result&quot;) // unreachable code
+}
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-unit" class="anchor" href="#unit" aria-hidden="true"></a>Unit</h3>
+<p><font size="6">The type with only one value: the <code>Unit</code> object.</p>
+<p>🔍 This type corresponds to the <code>void</code> type in Java.</font></p>
+
+            </section>
+        
+            <section >
+                <p>Use <code>Unit</code> as return type of a function</p>
+<ul>
+<li>➡️ Indicate a <em>Side Effect</em> !</li>
+<li>➡️ The input must be <em>consumed</em> in the function</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">import java.io.FileNotFoundException
+
+fun printException(e: Exception): Unit = when (e) {
+  is IllegalArgumentException -&gt; println(&quot;The input is invalid: $e&quot;)
+  is FileNotFoundException -&gt; println(&quot;Cannot find the file: $e&quot;)
+  else -&gt; println(&quot;Other exception: $e&quot;)
+}
+
+fun main() {
+  val e = IllegalArgumentException()
+  printException(e) // Side Effect =&gt; the input &quot;e&quot; is consumed
+}
 </code></pre>
 
             </section>
@@ -356,8 +496,457 @@ p {
     
         <section >
             
-            
+            <h3><a id="user-content-why-type-system" class="anchor" href="#why-type-system" aria-hidden="true"></a>Why Type System</h3>
+<ul>
+<li>Leverage compiler
+<ul>
+<li>➡️ Type inference, Type check, …</li>
+<li>➡️ Validation</li>
+</ul>
+</li>
+<li>Code Readability</li>
+<li>One of the FP goals is to <em>bring certainty to the compiler with the types</em>
+<ul>
+<li>Pattern Matching</li>
+<li>Domain Modeling</li>
+</ul>
+</li>
+</ul>
+
             </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-type-safety" class="anchor" href="#type-safety" aria-hidden="true"></a>Type Safety</h3>
+
+            </section>
+        
+            <section >
+                <p>Let us see a bad case first …</p>
+<pre><code class="language-kotlin=">import java.time.LocalDate
+
+data class File(
+    val fileName: String,
+    val title: String,
+    val content: String,
+    val author: String,
+    val updateDate: LocalDate
+)
+
+fun main() {
+    val strangeFile = File(
+        &quot;Functional Programming Note&quot;, // should be `fileName`
+        &quot;Jack&quot;, // should be `title`
+        &quot;This is a note for learning FP.&quot;, // `content`, the only correct String field
+        &quot;FP_note.txt&quot;, // should be `author`
+        LocalDate.now()
+    )
+    
+    println(&quot;$strangeFile&quot;)
+    // File(fileName=Functional Programming Note, title=Jack, content=This is a note for learning FP., author=FP_note.txt, updateDate=2021-10-05)
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-inline-class" class="anchor" href="#inline-class" aria-hidden="true"></a>Inline Class</h3>
+<pre><code class="language-kotlin=">@JvmInline value class FileName(private val value: String)
+@JvmInline value class Title(private val value: String)
+@JvmInline value class Content(private val value: String)
+@JvmInline value class Author(private val value: String)
+
+data class File(
+    val fileName: FileName,
+    val title: Title,
+    val content: Content,
+    val author: Author,
+    val updateDate: LocalDate
+)
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p><a href="https://kotlinlang.org/docs/inline-classes.html">https://kotlinlang.org/docs/inline-classes.html</a></p>
+<pre><code class="language-kotlin=">// Deprecated in Kotlin 1.5 to prevent confusing with `inline function`.
+// inline class FileName(val value: String)
+
+@JvmInline 
+value class FileName(private val value: String)
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-why-inline-class" class="anchor" href="#why-inline-class" aria-hidden="true"></a>Why Inline Class</h3>
+<ul>
+<li>Type-safe Domain Modeling</li>
+<li>No runtime overhead</li>
+</ul>
+<p>🔍 <font size="6">At runtime, instances of the inline class will be represented using this single property</font></p>
+<pre><code class="language-kotlin=">// No actual instantiation of class `FileName` happens
+// At runtime `fileName` contains just `String`
+
+val fileName = FileName(&quot;FP_note.txt&quot;)
+// val fileName = &quot;FP_note.txt&quot;
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p>➡️ Type-safe Domain Modeling</p>
+<pre><code class="language-kotlin=">import java.time.LocalDate
+
+@JvmInline value class FileName(private val value: String)
+@JvmInline value class Title(private val value: String)
+@JvmInline value class Content(private val value: String)
+@JvmInline value class Author(private val value: String)
+
+data class File(
+    val fileName: FileName,
+    val title: Title,
+    val content: Content,
+    val author: Author,
+    val updateDate: LocalDate
+)
+
+fun main() {
+    val myNote = File(
+        FileName(&quot;FP_note.txt&quot;),
+        Title(&quot;Functional Programming Note&quot;),
+        Content(&quot;This is a note for learning FP.&quot;),
+        Author(&quot;Jack&quot;),
+        LocalDate.now()
+    )
+       
+    println(&quot;$myNote&quot;)
+    // File(fileName=FileName(value=FP_note.txt), title=Title(value=Functional Programming Note), content=Content(value=This is a note for learning FP.), author=Author(value=Jack), updateDate=2021-10-05)
+}
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-type-alias" class="anchor" href="#type-alias" aria-hidden="true"></a>Type Alias</h3>
+<p>➡️ Just an alias, not for type safety</p>
+<p>🔍 Type aliases provide <em>alternative names</em> for existing types.</p>
+
+            </section>
+        
+            <section >
+                <p>The <code>strangeFile</code> is still wrong and not type-safe.</p>
+<pre><code class="language-kotlin=">import java.time.LocalDate
+
+typealias FileName = String
+typealias Title = String
+typealias Content = String
+typealias Author = String
+
+data class File(
+    val fileName: FileName,
+    val title: Title,
+    val content: Content,
+    val author: Author,
+    val updateDate: LocalDate
+)
+
+fun main() {
+    val strangeFile = File(
+        &quot;Functional Programming Note&quot;, // should be `fileName`
+        &quot;Jack&quot;, // should be `title`
+        &quot;This is a note for learning FP.&quot;, // `content`, the only correct String field
+        &quot;FP_note.txt&quot;, // should be `author`
+        LocalDate.now()
+    )
+       
+    println(&quot;$strangeFile&quot;)
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-when-to-use-type-alias" class="anchor" href="#when-to-use-type-alias" aria-hidden="true"></a>When to use Type Alias</h3>
+<p><a href="https://kotlinlang.org/docs/type-aliases.html">https://kotlinlang.org/docs/type-aliases.html</a></p>
+<p><font size="6"> ➡️ It’s useful to shorten long generic types and function types. </font></p>
+<pre><code class="language-kotlin=">typealias FileTable&lt;K&gt; = MutableMap&lt;K, MutableList&lt;File&gt;&gt;
+
+typealias MyHandler = (Int, String, Any) -&gt; Unit
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+        <section >
+            
+            <h3><a id="user-content-algebraic-data-type-adt" class="anchor" href="#algebraic-data-type-adt" aria-hidden="true"></a>Algebraic Data Type (ADT)</h3>
+<p><font size="6"> 🔍 a kind of <em>Composite Type</em></p>
+<p>i.e., a type formed by combining other types. </font></p>
+<ul>
+<li>Product Type ➡️ <code>data class</code></li>
+<li>Sum Type ➡️ <code>enum</code>, <code>sealed class</code></li>
+</ul>
+
+            </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-product-type" class="anchor" href="#product-type" aria-hidden="true"></a>Product Type</h3>
+<p>🔍 should have <em>all</em> the composed types</p>
+<p>A &amp; B &amp; C ➡️ A * B * C</p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-data-class" class="anchor" href="#data-class" aria-hidden="true"></a>Data Class</h3>
+<p><a href="https://kotlinlang.org/docs/data-classes.html">https://kotlinlang.org/docs/data-classes.html</a></p>
+<pre><code class="language-kotlin=">import java.time.LocalDate
+
+@JvmInline value class FileName(private val value: String)
+
+data class File(
+    val fileName: FileName,
+    val updateDate: LocalDate
+)
+
+fun main() {
+    val fpNote = File(FileName(&quot;FP_note.txt&quot;), LocalDate.now())
+    val kotlinNote = File(FileName(&quot;kotlin_note.txt&quot;), LocalDate.now())
+    
+    // File.toString()
+    println(&quot;$fpNote&quot;) // File(fileName=FileName(value=FP_note.txt), updateDate=2021-10-05)
+    
+    // File.equals()
+    println(fpNote == kotlinNote) // false
+    println(fpNote == File(FileName(&quot;FP_note.txt&quot;), LocalDate.now())) // true
+    
+    // File.copy()
+    println(&quot;${fpNote.copy(fileName = FileName(&quot;another_note.txt&quot;))}&quot;) // File(fileName=FileName(value=another_note.txt), updateDate=2021-10-05)
+}
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-sum-type" class="anchor" href="#sum-type" aria-hidden="true"></a>Sum Type</h3>
+<p>🔍 should have <em>one of</em> the composed types</p>
+<p>A | B | C ➡️ A + B + C</p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-enum-class" class="anchor" href="#enum-class" aria-hidden="true"></a>Enum Class</h3>
+<p><a href="https://kotlinlang.org/docs/enum-classes.html">https://kotlinlang.org/docs/enum-classes.html</a></p>
+<pre><code class="language-kotlin=">enum class Direction {
+    NORTH, SOUTH, WEST, EAST
+}
+
+fun main() {
+    val north = Direction.NORTH
+    val south = Direction.SOUTH
+    
+    println(&quot;${north.ordinal}, $north&quot;) // 0, NORTH
+    println(&quot;${south.ordinal}, $south&quot;) // 1, SOUTH
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-sealed-class" class="anchor" href="#sealed-class" aria-hidden="true"></a>Sealed Class</h3>
+<p><a href="https://kotlinlang.org/docs/sealed-classes.html">https://kotlinlang.org/docs/sealed-classes.html</a></p>
+<pre><code class="language-kotlin=">class File() { /* Generate a File object */ }
+class DataSource() { /* Connect to DB */ }
+
+sealed class MyError {
+    data class FileReadError(val f: File): MyError()
+    data class DatabaseError(val source: DataSource): MyError()
+    object RuntimeError: MyError()
+}
+
+fun readFile(f: File, source: DataSource) = MyError.FileReadError(f)
+
+fun log(e: MyError) = when(e) {
+    is MyError.FileReadError -&gt; println(&quot;File not found: $e&quot;)
+    is MyError.DatabaseError -&gt; println(&quot;DB connection error: $e&quot;)
+    is MyError.RuntimeError -&gt; println(&quot;$e&quot;)
+    // Note that we don't need the `else` part because `MyError` is a `sealed class`
+}
+
+fun main() {
+    val e = readFile(File(), DataSource())
+    log(e) // File not found: FileReadError(f=File@2c7b84de)
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p>Can we avoid to use <code>Phone?</code> and <code>MailAddress?</code></p>
+<pre><code class="language-kotlin=">@JvmInline value class FileName(private val value: String)
+@JvmInline value class Title(private val value: String)
+@JvmInline value class Content(private val value: String)
+@JvmInline value class Author(private val value: String)
+@JvmInline value class Phone(private val value: String)
+@JvmInline value class MailAddress(private val value: String)
+
+data class File(
+    val fileName: FileName,
+    val title: Title,
+    val content: Content,
+    val author: Author,
+    val updateDate: LocalDate,
+    val phone: Phone?,
+    val mailAddress: MailAddress?
+)
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p>Refactor with <code>sealed class</code></p>
+<pre><code class="language-kotlin=">data class File(
+    val fileName: FileName,
+    val title: Title,
+    val content: Content,
+    val author: Author,
+    val updateDate: LocalDate,
+    val contact: Contact
+)
+
+sealed class Contact {
+    data class WithPhone(val phone: Phone): Contact()
+    data class WithMail(val mailAddress: MailAddress): Contact()
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p><font size="6"> ➡️ Compiler can now enforce exhaustive evaluation </font></p>
+<pre><code class="language-kotlin=">import java.time.LocalDate
+
+@JvmInline value class FileName(private val value: String)
+@JvmInline value class Title(private val value: String)
+@JvmInline value class Content(private val value: String)
+@JvmInline value class Author(private val value: String)
+@JvmInline value class Phone(private val value: String)
+@JvmInline value class MailAddress(private val value: String)
+
+data class File(
+    val fileName: FileName,
+    val title: Title,
+    val content: Content,
+    val author: Author,
+    val updateDate: LocalDate,
+    val contact: Contact
+)
+
+sealed class Contact {
+    data class WithPhone(val phone: Phone): Contact()
+    data class WithMail(val mailAddress: MailAddress): Contact()
+}
+
+fun main() {
+    val myNote = File(
+        FileName(&quot;FP_note.txt&quot;),
+        Title(&quot;Functional Programming Note&quot;),
+        Content(&quot;This is a note for learning FP.&quot;),
+        Author(&quot;Jack&quot;),
+        LocalDate.now(),
+        Contact.WithPhone(Phone(&quot;88612345&quot;))
+    )
+    println(&quot;$myNote&quot;)
+    // File(fileName=FileName(value=FP_note.txt), title=Title(value=Functional Programming Note), content=Content(value=This is a note for learning FP.), author=Author(value=Jack), updateDate=2021-10-05, contact=WithPhone(phone=Phone(value=88612345)))
+    
+    when(myNote.contact) {
+        is Contact.WithPhone -&gt; println(&quot;Contact phone number: ${myNote.contact}&quot;)
+        is Contact.WithMail -&gt; println(&quot;Contact mail address: ${myNote.contact}&quot;)
+    }
+    // Contact phone number: WithPhone(phone=Phone(value=88612345))
+}
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-recap-1" class="anchor" href="#recap-1" aria-hidden="true"></a>Recap #1</h3>
+<ul>
+<li>Top Type: <code>Any</code>
+<ul>
+<li><font size="5">The root of the Kotlin class hierarchy. Every Kotlin class has <code>Any</code> as a superclass.</font></li>
+</ul>
+</li>
+<li>Bottom Type: <code>Nothing</code>
+<ul>
+<li><font size="5"><code>Nothing</code> is used to represent a value which will never exist.</font></li>
+<li><font size="5">Functions throwing exception directly</font></li>
+</ul>
+</li>
+<li><code>Unit</code>
+<ul>
+<li><font size="5"><code>Unit</code> is exactly equivalent to the <code>void</code> type in Java.</font></li>
+<li><font size="5">Functions that return <code>Unit</code> can indicate a <em>side effect</em> inside.</font></li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-recap-2" class="anchor" href="#recap-2" aria-hidden="true"></a>Recap #2</h3>
+<ul>
+<li><em>Type Safety</em> and Readability</li>
+<li>Inline Class</li>
+<li>Type Alias</li>
+<li>Algebraic Data Type (ADT)</li>
+<li>Product Type: <code>data class</code></li>
+<li>Sum Type: <code>enum class</code>, <code>sealed class</code></li>
+</ul>
+
+            </section>
+        
+
+    </section>
     
 
 
