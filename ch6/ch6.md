@@ -8,8 +8,8 @@ title: "Kotlin FP with Arrow"
 
 ---
 
-### 6. Resource
-### Allocation & Releasing
+#### ch 6.
+### Safe Resource Handling
 
 <style>
 pre {

@@ -10,7 +10,8 @@ title: "Kotlin FP with Arrow"
 
 #### ch 4.
 ### Domain Modeling 
-### and Error Handling
+#### and 
+### Error Handling
 
 <style>
 pre {

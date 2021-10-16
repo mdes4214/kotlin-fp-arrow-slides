@@ -63,9 +63,9 @@ Jack Lo
 3. [Immutable Data Operation with Optics](../ch3/export/)
 4. [Domain Modeling and Error Handling](../ch4/export/)
 5. [Kotlin Coroutine & Parallelization](../ch5/export/)
-6. [Resource Allocation & Releasing](../ch6/export/)
+6. [Safe Resource Handling](../ch6/export/)
 7. [Kotlin Flow](../ch7/export/)
-8. [Algebras & Dependency Injection](../ch8/export/)
+8. [Functional Programming](../ch8/export/)
 
 ---
 

@@ -8,8 +8,9 @@ title: "Kotlin FP with Arrow"
 
 ---
 
-### 5. Kotlin Coroutine
-### &
+#### ch 5. 
+### Kotlin Coroutine
+#### & 
 ### Parallelization
 
 <style>

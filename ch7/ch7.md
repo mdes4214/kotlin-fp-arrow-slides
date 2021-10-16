@@ -8,7 +8,8 @@ title: "Kotlin FP with Arrow"
 
 ---
 
-### 7. Kotlin Flow
+#### ch 7.
+### Kotlin Flow
 
 <style>
 pre {

@@ -8,9 +8,8 @@ title: "Kotlin FP with Arrow"
 
 ---
 
-### 8. Algebras
-### &
-### Dependency Injection
+#### ch 8. 
+### Functional Programming
 
 <style>
 pre {
