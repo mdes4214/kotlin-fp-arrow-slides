@@ -325,40 +325,483 @@ p {
             <section >
                 <h3><a id="user-content-references" class="anchor" href="#references" aria-hidden="true"></a>References</h3>
 <ul>
-<li></li>
+<li><a href="https://fsharpforfunandprofit.com/posts/recipe-part2">https://fsharpforfunandprofit.com/posts/recipe-part2</a></li>
+<li><a href="https://fsharpforfunandprofit.com/rop/">https://fsharpforfunandprofit.com/rop/</a></li>
+<li><a href="https://hltj.me/kotlin/2017/08/25/kotlin-functor-applicative-monad-cn.html">https://hltj.me/kotlin/2017/08/25/kotlin-functor-applicative-monad-cn.html</a></li>
+</ul>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-domain-modeling-recap" class="anchor" href="#domain-modeling-recap" aria-hidden="true"></a>Domain Modeling Recap</h3>
+<ul>
+<li>Why Type System
+<ul>
+<li>Communicate the design in the code</li>
+<li>Type Safety</li>
+</ul>
+</li>
+<li>🔍 <strong>Inline Class</strong></li>
+<li>ADT ➡️ <strong>Product Type</strong>, <strong>Sum Type</strong></li>
 </ul>
 
             </section>
         
             <section >
-                <h3><a id="user-content-todo-1" class="anchor" href="#todo-1" aria-hidden="true"></a>TODO #1</h3>
-<pre><code>- Either&lt;L, R&gt;
-- Evaluation: fold
-- Composition
-    - flatMap
-    - either.eager {} with bind
-    - zip
-- 3rd Party Error: Either.catch, mapLeft
-- Short circuit on error
-- Flatten
-    - traverseEither 
-    - Collection&lt;Either&lt;E, A&gt;&gt; =&gt; Either&lt;E, Collection&lt;A&gt;&gt;
-- fromNullable
+                <p><a href="https://youtu.be/2JB1_e5wZmU">Domain Modeling Made Functional - Scott Wlaschin</a>
+<img height="400" src="img/scott_wlaschin.png"></p>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-error-handling" class="anchor" href="#error-handling" aria-hidden="true"></a>Error Handling</h3>
+<ul>
+<li><code>Either</code> ➡️ model error and success</li>
+<li><code>Validated</code> ➡️ accumulate errors</li>
+<li><code>Option</code> ➡️ for absent optional value
+<ul>
+<li>Null-safety mechanism in Kotlin</li>
+</ul>
+</li>
+<li>provided by <a href="https://arrow-kt.io/docs/core/">Arrow-kt</a></li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-arrow-core" class="anchor" href="#arrow-core" aria-hidden="true"></a>Arrow Core</h3>
+<p><a href="https://arrow-kt.io/docs/core/">https://arrow-kt.io/docs/core/</a>
+<img src="img/either.png" alt=""></p>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-railway-oriented-programming" class="anchor" href="#railway-oriented-programming" aria-hidden="true"></a>Railway Oriented Programming</h3>
+<img height="400" src="img/rop.png">
+
+            </section>
+        
+            <section >
+                <p>input ➡️ Success / Failure output</p>
+<img height="300" src="img/rop_2.png">
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-either" class="anchor" href="#either" aria-hidden="true"></a>Either</h3>
+<ul>
+<li><code>Left</code> side and <code>Right</code> side</li>
+<li>Implement by <code>sealed class</code></li>
+</ul>
+<p>➡️ Errors on <code>Left</code> side as convention</p>
+<pre><code class="language-kotlin=">// Either sealed class
+// `Nothing` used for the &quot;non-relevant&quot; side
 </code></pre>
 
             </section>
         
             <section >
-                <h3><a id="user-content-todo-2" class="anchor" href="#todo-2" aria-hidden="true"></a>TODO #2</h3>
-<pre><code>- Validated
-- ValidatedNel
-- zip
-- Accumulate invalid cases
-- Flatten
-    - traverseValidated 
-    - Collection&lt;ValidatedNel&lt;E, A&gt;&gt; =&gt; ValidatedNel&lt;E, Collection&lt;A&gt;&gt;
-- fromNullable
+                <h3><a id="user-content-exception-" class="anchor" href="#exception-" aria-hidden="true"></a>Exception ?</h3>
+<ul>
+<li>What kind of exceptions a function may throw
+<ul>
+<li>➡️ Should dig through the source code</li>
+</ul>
+</li>
+<li>How to handle exceptions
+<ul>
+<li>➡️ Should make sure catch them all</li>
+</ul>
+</li>
+</ul>
+<p><strong>⚠️ Unwieldy !</strong></p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content--with-either" class="anchor" href="#-with-either" aria-hidden="true"></a>🔍 with Either</h3>
+<ul>
+<li>Functions return <code>Either</code>
+<ul>
+<li>➡️ explicit about all scenarios</li>
+</ul>
+</li>
+<li>More exhaustive
+<ul>
+<li>➡️ enforce callers to treat both sides</li>
+</ul>
+</li>
+</ul>
+<pre><code class="language-kotlin=">// Sample for Either (left和right都要)
 </code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-evaluation-either-results" class="anchor" href="#evaluation-either-results" aria-hidden="true"></a>Evaluation Either Results</h3>
+<p>➡️ <code>fold</code></p>
+<pre><code class="language-kotlin=">// sample for fold
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-either-composition" class="anchor" href="#either-composition" aria-hidden="true"></a>Either Composition</h3>
+<img width="600" src="img/rop_3.png">
+<p>⬇️</p>
+<img width="600" src="img/rop_4.png">
+
+            </section>
+        
+            <section >
+                <img width="600" src="img/rop_5.png">
+<p>⬇️</p>
+<img width="600" src="img/rop_6.png">
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-flatmap" class="anchor" href="#flatmap" aria-hidden="true"></a>flatMap</h3>
+<ul>
+<li>Chain <code>Either</code> sequentially</li>
+<li>A kind of the <em>M</em>-word ➡️ <strong><code>Monad</code></strong></li>
+</ul>
+<pre><code class="language-kotlin=">// sample for flatMap (串兩三個Either)
+</code></pre>
+
+            </section>
+        
+            <section >
+                <img height="600" src="img/monad.png">
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-flatmap-1" class="anchor" href="#flatmap-1" aria-hidden="true"></a>flatMap</h3>
+<ul>
+<li>Compute over the happy case ➡️ Happy Path</li>
+<li>Short circuit on error ➡️ Failure Path</li>
+</ul>
+<img width="600" src="img/rop_6.png">
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">// sample for short circuit
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-computation-block" class="anchor" href="#computation-block" aria-hidden="true"></a>Computation Block</h3>
+<p>➡️ Translate to chain of <code>flatMap</code> at compile time</p>
+<pre><code class="language-kotlin=">// sample for flatMap (串兩三個Either) =&gt; 改寫成either.eager{}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-3rd-party-error" class="anchor" href="#3rd-party-error" aria-hidden="true"></a>3rd Party Error</h3>
+<p>🔍 Sometimes you do need to interact with code that can potentially <strong>throw exceptions</strong></p>
+<p>➡️ <code>Either.catch {} .mapLeft {}</code></p>
+
+            </section>
+        
+            <section >
+                <p>🔍 Define a <code>toDomain</code> method to map <code>Throwable</code> to <strong>domain error</strong></p>
+<pre><code class="language-kotlin=">// sample for Either.catch {} (注意e.toDomain)
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-error-accumulation" class="anchor" href="#error-accumulation" aria-hidden="true"></a>Error Accumulation</h3>
+<p>Sometimes it would be nice to <strong>have all of these errors</strong> reported simultaneously.</p>
+<p>➡️ e.g. validate the input form</p>
+
+            </section>
+        
+            <section >
+                <p><img src="img/rop_7.png" alt=""></p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-validated" class="anchor" href="#validated" aria-hidden="true"></a>Validated</h3>
+<ul>
+<li><code>Invalid</code> side and <code>Valid</code> side</li>
+</ul>
+<pre><code class="language-kotlin=">// sample for Validated implement sealed class
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p><strong>Accumulate</strong> errors in <code>Invalid</code> side</p>
+<p>➡️ <code>ValidatedNel</code></p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-validatednel" class="anchor" href="#validatednel" aria-hidden="true"></a>ValidatedNel</h3>
+<ul>
+<li>Nel ➡️ <code>NonEmptyList</code></li>
+<li>Accumulate invalid cases</li>
+</ul>
+<p>🔍 <code>NonEmptyList</code> is a data type used in Arrow to model ordered lists that guarantee to have at least one value.</p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-validatednel-1" class="anchor" href="#validatednel-1" aria-hidden="true"></a>ValidatedNel</h3>
+<pre><code class="language-kotlin=">// sample for ValidatedNel implement sealed class
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-define-validate-functions" class="anchor" href="#define-validate-functions" aria-hidden="true"></a>Define Validate Functions</h3>
+<pre><code class="language-kotlin=">// sample for ValidateNel functions (可以用檢查表單欄位當例子)
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-zip-to-accumulate" class="anchor" href="#zip-to-accumulate" aria-hidden="true"></a>Zip to Accumulate</h3>
+<pre><code class="language-kotlin=">// sample for zip in ValidateNel
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-validate-domain-model-creation" class="anchor" href="#validate-domain-model-creation" aria-hidden="true"></a>Validate Domain Model Creation</h3>
+<pre><code class="language-kotlin=">// Sample for validate when domain model create
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-either-vs-validated" class="anchor" href="#either-vs-validated" aria-hidden="true"></a>Either vs. Validated</h3>
+<ul>
+<li><code>Either</code> ➡️ Short circuit on error</li>
+<li><code>Validated</code>, <code>ValidatedNel</code> ➡️ Accumulate invalid cases</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-either--validated" class="anchor" href="#either--validated" aria-hidden="true"></a>Either &amp; Validated</h3>
+<pre><code class="language-kotlin=">// sample for Either &amp; Validated (用either.eager{}包起來，檢查表單欄位後送出)
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-option" class="anchor" href="#option" aria-hidden="true"></a>Option</h3>
+<ul>
+<li><code>Option&lt;A&gt;</code>
+<ul>
+<li>if value <code>A</code> is present ➡️ <code>Some&lt;A&gt;</code></li>
+<li>if value is absent ➡️ <code>None</code></li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-option-1" class="anchor" href="#option-1" aria-hidden="true"></a>Option</h3>
+<ul>
+<li>Can be <em>emulated</em> by <code>Either&lt;Unit, A&gt;</code> and nullable variable <code>A?</code>
+<ul>
+<li><a href="https://github.com/arrow-kt/arrow-core/issues/114">https://github.com/arrow-kt/arrow-core/issues/114</a></li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <p>As a FP idiom and to support some use cases (RxJava)</p>
+<p>➡️ use <code>Option</code></p>
+
+            </section>
+        
+            <section >
+                <p><code>fromNullable</code> and <code>A?.let {}</code></p>
+<pre><code class="language-kotlin=">// sample for Option, Either&lt;Unit, A&gt;, A? (A?.let 模擬flatMap)
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-flatten-iterable-collection" class="anchor" href="#flatten-iterable-collection" aria-hidden="true"></a>Flatten Iterable Collection</h3>
+<ul>
+<li>Flatten <strong>iterable</strong> collection to make it easier to work with
+<ul>
+<li><code>Array&lt;T&gt;</code> doesn’t implement <code>Iterable&lt;T&gt;</code></li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <ul>
+<li><code>List&lt;Either&lt;E, A&gt;&gt;</code>
+<ul>
+<li>➡️ <code>Either&lt;E, List&lt;A&gt;&gt;</code></li>
+</ul>
+</li>
+<li><code>List&lt;ValidateNel&lt;E, A&gt;&gt;</code>
+<ul>
+<li>➡️ <code>ValidateNel&lt;E, List&lt;A&gt;&gt;</code></li>
+</ul>
+</li>
+<li><code>List&lt;Option&lt;A&gt;&gt;</code>
+<ul>
+<li>➡️ <code>Option&lt;List&lt;A&gt;&gt;</code></li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <ul>
+<li><code>sequence</code> ➡️ simply flatten</li>
+<li><code>traverse</code> ➡️ flatten after <em>operation</em></li>
+</ul>
+<pre><code class="language-kotlin=">// sample for Flatten iterable (用either.eager{}串起這些flatten後的)
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-recap-1" class="anchor" href="#recap-1" aria-hidden="true"></a>Recap #1</h3>
+<ul>
+<li>Railway Oriented Programming
+<ul>
+<li>➡️ Success / Failure output</li>
+</ul>
+</li>
+<li><code>Either&lt;E, A&gt;</code>
+<ul>
+<li>Evaluation ➡️ <code>fold</code></li>
+<li>Composition ➡️ <code>flatMap</code>
+<ul>
+<li>➡️ <code>either.eager {}</code> with <code>bind()</code></li>
+</ul>
+</li>
+<li>Handling 3rd Party Error
+<ul>
+<li>➡️ <code>Either.catch {} .mapLeft {}</code></li>
+</ul>
+</li>
+<li>Short circuit on error</li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-recap-2" class="anchor" href="#recap-2" aria-hidden="true"></a>Recap #2</h3>
+<ul>
+<li><code>Validated&lt;E, A&gt;</code> &amp; <code>ValidatedNel&lt;E, A&gt;</code>
+<ul>
+<li>Accumulate invalid cases ➡️ <code>zip</code></li>
+</ul>
+</li>
+<li><code>Option&lt;A&gt;</code>
+<ul>
+<li>Absent optional value ➡️ <code>Some&lt;A&gt;</code>, <code>None</code></li>
+<li><code>fromNullable</code> and <code>A?.let {}</code></li>
+</ul>
+</li>
+<li>Flatten
+<ul>
+<li><code>sequence</code>, <code>traverse</code></li>
+<li><code>Iterable&lt;Either&lt;E, A&gt;&gt;</code>
+<ul>
+<li>➡️ <code>Either&lt;E, Iterable&lt;A&gt;&gt;</code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
 
             </section>
         
