@@ -10,7 +10,7 @@ The slides will include these chapters:
 - ch 5. Kotlin Coroutine & Parallelization
 - ch 6. Safe Resource Handling
 - ch 7. Kotlin Flow
-- ch 8. Function
+- ch 8. Functional Programming
 
 For the beginner of Kotlin, here is the learning notes and slides:
 
