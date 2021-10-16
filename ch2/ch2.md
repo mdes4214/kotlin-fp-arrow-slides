@@ -8,8 +8,9 @@ title: "Kotlin FP with Arrow"
 
 ---
 
-### 2. Domain Modeling
-### with ADT
+#### ch 2.
+### Domain Modeling
+### Made Functional
 
 <style>
 pre {
@@ -192,6 +193,17 @@ fun main() {
 - One of the FP goals is to *bring certainty to the compiler with the types*
   - Pattern Matching
   - Domain Modeling
+
+---
+
+### Code Readability
+
+[Domain Modeling Made Functional - Scott Wlaschin](https://youtu.be/2JB1_e5wZmU)
+<img height="400" src="img/scott_wlaschin.png">
+
+--
+
+![](img/scott_wlaschin_2.png)
 
 ---
 
@@ -582,8 +594,9 @@ fun main() {
 ### Recap #2
 
 - *Type Safety* and Readability
-- Inline Class
-- Type Alias
+- Key DDD principle
+  - ➡️ Communicate the design in the code
+- Inline Class & Type Alias
 - Algebraic Data Type (ADT)
-- Product Type: `data class`
-- Sum Type: `enum class`, `sealed class`
+- Product Type ➡️ `data class`
+- Sum Type ➡️ `enum class`, `sealed class`
