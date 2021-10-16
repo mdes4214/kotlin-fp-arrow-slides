@@ -8,8 +8,9 @@ title: "Kotlin FP with Arrow"
 
 ---
 
-### 4. Error Handling
-### with Either & Validated
+#### ch 4.
+### Domain Modeling 
+### and Error Handling
 
 <style>
 pre {
@@ -92,5 +93,5 @@ p {
 - fromNullable
 ```
 
----
+
 
