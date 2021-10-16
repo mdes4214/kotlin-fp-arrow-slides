@@ -71,9 +71,9 @@ Jack Lo
 
 ### References
 
-- [https://kotlinlang.org/docs/home.html](https://kotlinlang.org/docs/home.html)
-- [https://arrow-kt.io/](https://arrow-kt.io/)
-- [https://www.47deg.com/technologies/kotlin/](https://www.47deg.com/technologies/kotlin/)
-- [https://play.kotlinlang.org/](https://play.kotlinlang.org/)
-
+- https://kotlinlang.org/docs/home.html
+- https://arrow-kt.io/
+- https://www.47deg.com/technologies/kotlin/
+- https://fsharpforfunandprofit.com/posts/recipe-part2/
+- https://play.kotlinlang.org/
 
