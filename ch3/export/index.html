@@ -325,22 +325,342 @@ p {
             <section >
                 <h3><a id="user-content-references" class="anchor" href="#references" aria-hidden="true"></a>References</h3>
 <ul>
-<li></li>
+<li><a href="https://ivanmorgillo.com/2020/11/19/doh-there-is-no-copy-method-for-sealed-classes-in-kotlin/">https://ivanmorgillo.com/2020/11/19/doh-there-is-no-copy-method-for-sealed-classes-in-kotlin/</a></li>
+</ul>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+        <section >
+            
+            <h3><a id="user-content-immutability" class="anchor" href="#immutability" aria-hidden="true"></a>Immutability</h3>
+<ul>
+<li>Deterministic ➡️ same input, same output</li>
+<li>Pure Function ➡️ work over <em>immutable data</em></li>
+<li>Easier to <strong>test</strong></li>
+<li>Easier to <strong>trace</strong></li>
+<li>Thread safety</li>
+</ul>
+
+            </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-data-class" class="anchor" href="#data-class" aria-hidden="true"></a>Data Class</h3>
+<p><code>copy</code></p>
+<pre><code class="language-kotlin=">// 展示copy是吐回另一個data class而不是修改
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-nested-data-class" class="anchor" href="#nested-data-class" aria-hidden="true"></a>Nested Data Class</h3>
+<p>Deep <code>copy</code></p>
+<pre><code class="language-kotlin=">// 展示deep copy in data class
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content--with-optics" class="anchor" href="#-with-optics" aria-hidden="true"></a>🔍 with Optics</h3>
+<pre><code class="language-koltin=">// 展示@optics in deep copy
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-copy-sealed-class" class="anchor" href="#copy-sealed-class" aria-hidden="true"></a>Copy Sealed Class</h3>
+<ul>
+<li>There is NO <code>copy</code> method for <code>sealed class</code></li>
 </ul>
 
             </section>
         
             <section >
-                <h3><a id="user-content-todo" class="anchor" href="#todo" aria-hidden="true"></a>TODO</h3>
-<pre><code>- Immutability
-- Deep Ops in data class
-- @Optics
-- Lens
-- Prism
-- Optional
-- Every
-- Iso: isomorphism
+                <h3><a id="user-content--with-optics-1" class="anchor" href="#-with-optics-1" aria-hidden="true"></a>🔍 with Optics</h3>
+<pre><code class="language-koltin=">// 展示@optics prism for sealed class update
 </code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-optics" class="anchor" href="#optics" aria-hidden="true"></a>Optics</h3>
+<ul>
+<li>provided by <a href="https://arrow-kt.io/docs/optics/">Arrow-kt</a></li>
+<li>DSL (Domain-Specific Language)
+<ul>
+<li>➡️ improve <em>ease of use</em> and <em>readability</em></li>
+</ul>
+</li>
+<li><strong>Generated at compile time</strong></li>
+<li>Direct and reusable syntax to read / modify immutable data structures
+<ul>
+<li>➡️ “modify” means copy and <em>return a new instance</em></li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-arrow-optics" class="anchor" href="#arrow-optics" aria-hidden="true"></a>Arrow Optics</h3>
+<p><a href="https://arrow-kt.io/docs/optics/">https://arrow-kt.io/docs/optics/</a>
+<img src="img/lens.png" alt=""></p>
+
+            </section>
+        
+            <section >
+                <p>🔍 <code>Focus</code> means the target object
+<img src="img/focus.png" alt=""></p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-optics-1" class="anchor" href="#optics-1" aria-hidden="true"></a>Optics</h3>
+<ul>
+<li>Lens</li>
+<li>Prism</li>
+<li>Optional</li>
+<li>Traversal</li>
+<li>Every</li>
+<li>Iso</li>
+</ul>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-lens" class="anchor" href="#lens" aria-hidden="true"></a>Lens</h3>
+<ul>
+<li>Functional reference</li>
+<li>Focus into a structure and operate its focus
+<ul>
+<li><code>get</code> ➡️ get the focus</li>
+<li><code>set</code> ➡️ set the focus to input value</li>
+<li><code>modify</code> ➡️ update the focus with input function</li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">// sample for Lens
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-prism" class="anchor" href="#prism" aria-hidden="true"></a>Prism</h3>
+<ul>
+<li>See into a structure and optionally find its focus
+<ul>
+<li><code>getOrModify</code> ➡️ match the focus</li>
+<li><code>reverseGet</code> ➡️ get back to the source domain from the focus</li>
+</ul>
+</li>
+<li>Mostly used for structures that have a relationship only under a <em>certain condition</em>
+<ul>
+<li>➡️ Copy method for <code>sealed class</code> !</li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">// sample for Prism
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-optional" class="anchor" href="#optional" aria-hidden="true"></a>Optional</h3>
+<ul>
+<li>Allow seeing into a structure and <em>getting, setting, or modifying an optional focus</em>
+<ul>
+<li>Lens ➡️ getting, setting, or modifying</li>
+<li>Prism ➡️ an optional focus</li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <p>🔍 <code>Optional</code> is composed of <code>Lens</code> and <code>Prism</code></p>
+<pre><code class="language-kotlin=">// sample for compose Optional
+</code></pre>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">// sample for Optional
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-traversal" class="anchor" href="#traversal" aria-hidden="true"></a>Traversal</h3>
+<ul>
+<li>See into a structure and set, or modify 0 to N foci</li>
+<li>Focus into a structure that has 0 to N elements
+<ul>
+<li>such as <em>collections</em> etc.</li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">// sample for simple list Traversal
+</code></pre>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">// sample for compose Traversal
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p>🔍 Leverage DSL</p>
+<pre><code class="language-kotlin=">// sample for Traversal DSL
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-every" class="anchor" href="#every" aria-hidden="true"></a>Every</h3>
+<ul>
+<li>See into a structure and set, or modify 0 to N foci</li>
+<li>Focus into a structure that has 0 to N elements
+<ul>
+<li>such as <em>collections</em> etc.</li>
+</ul>
+</li>
+<li><strong>Match over elements</strong> on a collection</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">// sample for compose Every
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p>🔍 Leverage DSL</p>
+<pre><code class="language-kotlin=">// sample for Every DSL
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-iso" class="anchor" href="#iso" aria-hidden="true"></a>Iso</h3>
+<ul>
+<li>Define an <strong>isomorphism</strong> between a type <code>S</code> and <code>A</code>
+<ul>
+<li><code>data class</code> and <code>TupleN</code></li>
+</ul>
+</li>
+<li><strong>Invertible</strong> optic</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">// sample for Iso
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p>🔍 Compose with other optics</p>
+<pre><code class="language-kotlin=">// sample for compose Iso with other optics
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-recap-1" class="anchor" href="#recap-1" aria-hidden="true"></a>Recap #1</h3>
+<ul>
+<li>Immutability
+<ul>
+<li>Deep copy in nested <code>data class</code></li>
+<li>NO copy method for <code>sealed class</code></li>
+</ul>
+</li>
+<li><code>@Optics</code>
+<ul>
+<li>Solved above problems</li>
+<li>DSL for highly <em>composable</em> and <em>reusable</em></li>
+<li><strong>Generated at compile time</strong></li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-recap-2" class="anchor" href="#recap-2" aria-hidden="true"></a>Recap #2</h3>
+<ul>
+<li>Lens, Prism ➡️ compose to Optional</li>
+<li>Traversl, Every ➡️ for collections</li>
+<li>Iso ➡️ isomorphism between <code>data class</code> and <code>TupleN</code></li>
+</ul>
 
             </section>
         
