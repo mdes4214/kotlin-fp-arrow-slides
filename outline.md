@@ -59,9 +59,9 @@ Jack Lo
 ### Outline
 
 1. [Functional Programming](../ch1/export/)
-2. [Domain Modeling with ADT](../ch2/export/)
-3. [Data Ops with @Optics](../ch3/export/)
-4. [Error Handling with Either & Validated](../ch4/export/)
+2. [Domain Modeling Made Functional](../ch2/export/)
+3. [Immutable Data Operation with Optics](../ch3/export/)
+4. [Domain Modeling and Error Handling](../ch4/export/)
 5. [Kotlin Coroutine & Parallelization](../ch5/export/)
 6. [Resource Allocation & Releasing](../ch6/export/)
 7. [Kotlin Flow](../ch7/export/)
