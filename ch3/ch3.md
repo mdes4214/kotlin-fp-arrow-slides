@@ -8,8 +8,9 @@ title: "Kotlin FP with Arrow"
 
 ---
 
-### 3. Data Ops
-### with @Optics
+#### ch 3.
+### Immutable Data Operation
+### with Optics
 
 <style>
 pre {
@@ -73,5 +74,4 @@ p {
 - Iso: isomorphism
 ```
 
----
 
