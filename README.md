@@ -23,3 +23,10 @@ https://mdes4214.github.io/kotlin-fp-arrow-slides/export/
 ## Practice Code
 
 https://github.com/mdes4214/kotlin-fp-arrow-exercises
+
+## References
+
+- [Kotlin docs](https://kotlinlang.org/docs/)
+- [Arrow-kt](https://arrow-kt.io/)
+- [47 Degrees](https://www.47deg.com/technologies/kotlin/)
+- [Railway Oriented Programming](https://fsharpforfunandprofit.com/posts/recipe-part2/)
