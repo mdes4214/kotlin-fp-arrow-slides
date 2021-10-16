@@ -8,7 +8,8 @@ title: "Kotlin FP with Arrow"
 
 ---
 
-### 1. Functional Programming
+#### ch 1.
+### Functional Programming
 
 <style>
 pre {
