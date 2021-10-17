@@ -300,8 +300,10 @@ Sometimes it would be nice to **have all of these errors** reported simultaneous
 
 ### Either vs. Validated
 
-- `Either` ➡️ Short circuit on error
-- `Validated`, `ValidatedNel` ➡️ Accumulate invalid cases
+- `Either`
+  - ➡️ Short circuit on error (*Fail Fast*)
+- `Validated`, `ValidatedNel`
+  - ➡️ Accumulate invalid cases (*Fail Slow*)
 
 --
 

@@ -632,8 +632,16 @@ p {
         <section >
             <h3><a id="user-content-either-vs-validated" class="anchor" href="#either-vs-validated" aria-hidden="true"></a>Either vs. Validated</h3>
 <ul>
-<li><code>Either</code> ➡️ Short circuit on error</li>
-<li><code>Validated</code>, <code>ValidatedNel</code> ➡️ Accumulate invalid cases</li>
+<li><code>Either</code>
+<ul>
+<li>➡️ Short circuit on error (<em>Fail Fast</em>)</li>
+</ul>
+</li>
+<li><code>Validated</code>, <code>ValidatedNel</code>
+<ul>
+<li>➡️ Accumulate invalid cases (<em>Fail Slow</em>)</li>
+</ul>
+</li>
 </ul>
 
             </section>
