@@ -358,7 +358,15 @@ p {
         <section >
             <h3><a id="user-content-data-class" class="anchor" href="#data-class" aria-hidden="true"></a>Data Class</h3>
 <p><code>copy</code></p>
-<pre><code class="language-kotlin=">// 展示copy是吐回另一個data class而不是修改
+<pre><code class="language-kotlin=">data class Employee(val name: String, val id: String)
+
+fun main() {
+    val employeeJack = Employee(name = &quot;Jack&quot;, id = &quot;1&quot;)
+    val employeeAnotherJack = employeeJack.copy(id = &quot;2&quot;) // return a new instance instead of modifying it
+
+    println(&quot;$employeeJack&quot;)  // Employee(name=Jack, id=1)
+    println(&quot;$employeeAnotherJack&quot;)  // Employee(name=Jack, id=2)
+}
 </code></pre>
 
             </section>
@@ -366,14 +374,50 @@ p {
             <section >
                 <h3><a id="user-content-nested-data-class" class="anchor" href="#nested-data-class" aria-hidden="true"></a>Nested Data Class</h3>
 <p>Deep <code>copy</code></p>
-<pre><code class="language-kotlin=">// 展示deep copy in data class
+<pre><code class="language-kotlin=">data class Street(val number: Int, val name: String)
+data class Address(val city: String, val street: Street)
+data class Company(val name: String, val address: Address)
+data class Employee(val name: String, val company: Company)
+
+fun Employee.updateStreetName(newStreetName: String): Employee =
+    this.copy(
+        company = this.company.copy(
+            address = this.company.address.copy(
+                street = this.company.address.street.copy(
+                    name = newStreetName
+                )
+            )
+        )
+    )
+
+fun main() {
+    val john = Employee(&quot;John Doe&quot;, Company(&quot;Arrow&quot;, Address(&quot;Functional city&quot;, Street(23, &quot;lambda street&quot;))))
+    val johnInAlphaStreet = john.updateStreetName(&quot;alpha street&quot;)
+    println(&quot;$johnInAlphaStreet&quot;)
+    // Employee(name=John Doe, company=Company(name=Arrow, address=Address(city=Functional city, street=Street(number=23, name=alpha street))))
+}
 </code></pre>
 
             </section>
         
             <section >
                 <h3><a id="user-content--with-optics" class="anchor" href="#-with-optics" aria-hidden="true"></a>🔍 with Optics</h3>
-<pre><code class="language-koltin=">// 展示@optics in deep copy
+<pre><code class="language-kotlin=">import arrow.optics.optics
+
+@optics data class Street(val number: Int, val name: String) { companion object }
+@optics data class Address(val city: String, val street: Street) { companion object }
+@optics data class Company(val name: String, val address: Address) { companion object }
+@optics data class Employee(val name: String, val company: Company) { companion object }
+
+fun Employee.updateStreetName(newStreetName: String): Employee =
+    Employee.company.address.street.name.set(this, newStreetName)
+
+fun main() {
+    val john = Employee(&quot;John Doe&quot;, Company(&quot;Arrow&quot;, Address(&quot;Functional city&quot;, Street(23, &quot;lambda street&quot;))))
+    val johnInAlphaStreet = john.updateStreetName(&quot;alpha street&quot;)
+    println(&quot;$johnInAlphaStreet&quot;)
+    // Employee(name=John Doe, company=Company(name=Arrow, address=Address(city=Functional city, street=Street(number=23, name=alpha street))))
+}
 </code></pre>
 
             </section>
@@ -383,12 +427,78 @@ p {
 <ul>
 <li>There is NO <code>copy</code> method for <code>sealed class</code></li>
 </ul>
+<pre><code class="language-kotlin=">sealed class ContactInformation {
+    data class Email(val value: String) : ContactInformation()
+    data class HomeAddress(val street: String) : ContactInformation()
+    object Pigeon : ContactInformation()
+    sealed class Phone : ContactInformation() {
+        data class MobilePhone(val number: String) : Phone()
+        data class OfficePhone(val number: String) : Phone()
+        data class HomePhone(val number: String) : Phone()
+    }
+}
+
+data class UserProfile(val name: String, val contact: ContactInformation)
+
+fun main() {
+    val joe = UserProfile(name = &quot;Joe&quot;, contact = ContactInformation.Phone.MobilePhone(&quot;123456789&quot;))
+    val joeWithNewPhone = joe.copy(contact = joe.contact.copy(ContactInformation.Phone.MobilePhone(&quot;987654321&quot;)))
+    // Unresolved reference: copy
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p>…or need to do something horrible</p>
+<pre><code class="language-kotlin=">fun main() {
+    val joe = UserProfile(name = &quot;Joe&quot;, contact = ContactInformation.Phone.MobilePhone(&quot;123456789&quot;))
+
+    val newPhone = when (joe.contact) {
+        is ContactInformation.Email -&gt; joe.contact
+        is ContactInformation.Phone.MobilePhone -&gt; ContactInformation.Phone.MobilePhone(&quot;987654321&quot;)
+        is ContactInformation.Phone.OfficePhone -&gt; ContactInformation.Phone.MobilePhone(&quot;987654321&quot;)
+        is ContactInformation.Phone.HomePhone -&gt; ContactInformation.Phone.MobilePhone(&quot;987654321&quot;)
+        is ContactInformation.HomeAddress -&gt; joe.contact
+        is ContactInformation.Pigeon -&gt; joe.contact
+    }
+    val joeWithNewPhone = joe.copy(contact = newPhone)
+    println(joeWithNewPhone) // UserProfile(name=Joe, contact=MobilePhone(number=987654321))
+}
+</code></pre>
 
             </section>
         
             <section >
                 <h3><a id="user-content--with-optics-1" class="anchor" href="#-with-optics-1" aria-hidden="true"></a>🔍 with Optics</h3>
-<pre><code class="language-koltin=">// 展示@optics prism for sealed class update
+<pre><code class="language-kotlin=">import arrow.optics.optics
+
+@optics
+sealed class ContactInformation {
+    companion object {}
+
+    data class Email(val value: String) : ContactInformation()
+    data class HomeAddress(val street: String) : ContactInformation()
+    object Pigeon : ContactInformation()
+
+    @optics
+    sealed class Phone : ContactInformation() {
+        companion object {}
+
+        @optics data class MobilePhone(val number: String) : Phone() { companion object }
+        @optics data class OfficePhone(val number: String) : Phone() { companion object }
+        @optics data class HomePhone(val number: String) : Phone() { companion object }
+    }
+}
+
+@optics
+data class UserProfile(val name: String, val contact: ContactInformation) { companion object }
+
+fun main() {
+    val joe = UserProfile(name = &quot;Joe&quot;, contact = ContactInformation.Phone.MobilePhone(&quot;123456789&quot;))
+    val joeWithNewPhone = UserProfile.contact.set(joe, ContactInformation.Phone.MobilePhone(&quot;987654321&quot;))
+    println(joeWithNewPhone) // UserProfile(name=Joe, contact=MobilePhone(number=987654321))
+}
 </code></pre>
 
             </section>
@@ -470,7 +580,22 @@ p {
             </section>
         
             <section >
-                <pre><code class="language-kotlin=">// sample for Lens
+                <pre><code class="language-kotlin=">import arrow.optics.Lens
+
+data class UserProfile(val name: String)
+
+val userProfileLens: Lens&lt;UserProfile, String&gt; = Lens(
+    get = { userProfile -&gt; userProfile.name },
+    set = { userProfile, value -&gt; userProfile.copy(name = value) }
+)
+
+fun main() {
+    val joe = UserProfile(&quot;Joe&quot;)
+
+    println(userProfileLens.get(joe)) // Joe
+    println(userProfileLens.set(joe, &quot;Jack&quot;)) // UserProfile(name=Jack)
+    println(userProfileLens.modify(joe) { it.lowercase() }) // UserProfile(name=joe)
+}
 </code></pre>
 
             </section>
@@ -494,7 +619,82 @@ p {
             </section>
         
             <section >
-                <pre><code class="language-kotlin=">// sample for Prism
+                <pre><code class="language-kotlin=">import arrow.core.left
+import arrow.core.right
+import arrow.optics.Prism
+
+sealed class ContactInformation {
+    data class Email(val value: String) : ContactInformation()
+    object Pigeon : ContactInformation()
+}
+
+val contactInformationPrism: Prism&lt;ContactInformation, ContactInformation.Email&gt; = Prism(
+    getOrModify = { contactInformation -&gt;
+        when (contactInformation) {
+            is ContactInformation.Email -&gt; contactInformation.right()
+            else -&gt; contactInformation.left()
+        }
+    },
+    reverseGet = { contactInformation -&gt; contactInformation } // (::identity)
+)
+
+fun main() {
+    val contactInformation = ContactInformation.Email(&quot;joe@mail.com&quot;)
+
+    val newContactInformation = contactInformationPrism.modify(contactInformation) { email -&gt;
+        email.copy(value = &quot;newJoe@mail.com&quot;)
+    }
+    println(newContactInformation) // Email(value=newJoe@mail.com)
+
+    println(contactInformationPrism.getOrModify(ContactInformation.Pigeon)) // Either.Left(playground.ContactInformation$Pigeon@6537cf78)
+    println(contactInformationPrism.getOrModify(ContactInformation.Email(&quot;jack@mail.com&quot;))) // Either.Right(Email(value=jack@mail.com))
+    println(contactInformationPrism.reverseGet(ContactInformation.Email(&quot;joe@mail.com&quot;))) // Email(value=joe@mail.com)
+}
+
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p>How does <code>reverseGet</code> work ?</p>
+<pre><code class="language-kotlin=">import arrow.core.compose
+import arrow.core.left
+import arrow.core.right
+import arrow.optics.Prism
+
+sealed class ContactInformation {
+    data class Email(val value: String) : ContactInformation()
+    object Pigeon : ContactInformation()
+}
+
+fun ContactInformation.Email.upperEmail(): String = this.value.uppercase()
+
+val contactInformationPrism: Prism&lt;ContactInformation, ContactInformation.Email&gt; = Prism(
+    getOrModify = { contactInformation -&gt;
+        when (contactInformation) {
+            is ContactInformation.Email -&gt; contactInformation.right()
+            else -&gt; contactInformation.left()
+        }
+    },
+    reverseGet = ContactInformation::Email compose ContactInformation.Email::upperEmail // (Email) -&gt; (String) -&gt; Email
+)
+
+fun main() {
+    val contactInformation = ContactInformation.Email(&quot;joe@mail.com&quot;)
+
+    val newContactInformation = contactInformationPrism.modify(contactInformation) { email -&gt;
+        email.copy(value = &quot;newJoe@mail.com&quot;)
+    }
+    println(newContactInformation) // Email(value=NEWJOE@MAIL.COM)
+    // Note the email value is uppercase!
+    // 1. modify(source: S, map: (A) -&gt; B): T
+    // 2. reverseGet(focus: B): T
+    // chain 1. and 2., we get (A) -&gt; (B) -&gt; T, that's why the email value is uppercase
+
+    println(contactInformationPrism.getOrModify(ContactInformation.Pigeon)) // Either.Left(playground.ContactInformation$Pigeon@b97c004)
+    println(contactInformationPrism.getOrModify(ContactInformation.Email(&quot;jack@mail.com&quot;))) // Either.Right(Email(value=jack@mail.com))
+    println(contactInformationPrism.reverseGet(ContactInformation.Email(&quot;joe@mail.com&quot;))) // Email(value=JOE@MAIL.COM)
+}
 </code></pre>
 
             </section>
@@ -514,13 +714,56 @@ p {
         
             <section >
                 <p>🔍 <code>Optional</code> is composed of <code>Lens</code> and <code>Prism</code></p>
-<pre><code class="language-kotlin=">// sample for compose Optional
+<pre><code class="language-kotlin=">//    val emailUpdated = when(contactInformation) {
+//        is ContactInformation.Email -&gt; contactInformation.copy(value = &quot;jack@mail.com&quot;)
+//        else -&gt; contactInformation
+//    }
+
+    val emailOptional: Optional&lt;ContactInformation, String&gt; =
+        ContactInformation.email compose ContactInformation.Email.value
+
+    val emailOptional2: Optional&lt;ContactInformation, String&gt; =
+        ContactInformation.email.value
 </code></pre>
 
             </section>
         
             <section >
-                <pre><code class="language-kotlin=">// sample for Optional
+                <pre><code class="language-kotlin=">import arrow.optics.Optional
+import arrow.optics.optics
+
+@optics
+sealed class ContactInformation {
+    companion object {}
+
+    @optics data class Email(val value: String) : ContactInformation() { companion object }
+    object Pigeon : ContactInformation()
+}
+
+fun main() {
+    val contactInformation = ContactInformation.Email(&quot;joe@mail.com&quot;)
+
+    val emailUpdated = when(contactInformation) {
+        is ContactInformation.Email -&gt; contactInformation.copy(value = &quot;jack@mail.com&quot;)
+        else -&gt; contactInformation
+    }
+
+    val emailOptional: Optional&lt;ContactInformation, String&gt; =
+        ContactInformation.email compose ContactInformation.Email.value
+
+    val emailOptional2: Optional&lt;ContactInformation, String&gt; =
+        ContactInformation.email.value
+
+    println(emailUpdated) // Email(value=jack@mail.com)
+
+    println(emailOptional.set(contactInformation, &quot;jack@mail.com&quot;)) // Email(value=jack@mail.com)
+    println(emailOptional.getOrModify(ContactInformation.Pigeon)) // Either.Left(playground.ContactInformation$Pigeon@5ae9a829)
+    println(emailOptional.getOrModify(ContactInformation.Email(&quot;jack@mail.com&quot;))) // Either.Right(jack@mail.com)
+
+    println(emailOptional2.set(contactInformation, &quot;jack@mail.com&quot;)) // Email(value=jack@mail.com)
+    println(emailOptional2.getOrModify(ContactInformation.Pigeon)) // Either.Left(playground.ContactInformation$Pigeon@5ae9a829)
+    println(emailOptional2.getOrModify(ContactInformation.Email(&quot;jack@mail.com&quot;))) // Either.Right(jack@mail.com)
+}
 </code></pre>
 
             </section>
@@ -547,20 +790,57 @@ p {
             </section>
         
             <section >
-                <pre><code class="language-kotlin=">// sample for simple list Traversal
+                <pre><code class="language-kotlin=">import arrow.optics.Traversal
+
+fun main() {
+    val users = listOf(&quot;Joe&quot;, &quot;Jack&quot;, &quot;Mark&quot;, &quot;Sam&quot;)
+    val traversalString = Traversal.list&lt;String&gt;()
+
+    val upperUsers = traversalString.modify(users) { it.uppercase() }
+    println(upperUsers) // [JOE, JACK, MARK, SAM]
+}
 </code></pre>
 
             </section>
         
             <section >
-                <pre><code class="language-kotlin=">// sample for compose Traversal
-</code></pre>
+                <p>Composed by <code>Lens</code></p>
+<pre><code class="language-kotlin=">import arrow.optics.Traversal
+import arrow.optics.optics
 
-            </section>
-        
-            <section >
-                <p>🔍 Leverage DSL</p>
-<pre><code class="language-kotlin=">// sample for Traversal DSL
+@optics data class Street(val number: Int, val name: String) { companion object }
+@optics data class Address(val city: String, val street: Street) { companion object }
+@optics data class Company(val name: String, val address: Address) { companion object }
+@optics data class Employee(val name: String, val company: Company) { companion object }
+@optics data class Employees(val employees: List&lt;Employee&gt;) { companion object }
+
+
+fun main() {
+    val employees = Employees(
+        listOf(
+            Employee(&quot;John&quot;, Company(&quot;Arrow&quot;, Address(&quot;Functional city&quot;, Street(23, &quot;lambda street&quot;)))),
+            Employee(&quot;Jane&quot;, Company(&quot;Arrow&quot;, Address(&quot;Functional city&quot;, Street(23, &quot;lambda street&quot;)))),
+            Employee(&quot;Mark&quot;, Company(&quot;Arrow&quot;, Address(&quot;Functional city&quot;, Street(23, &quot;lambda street&quot;)))),
+            Employee(&quot;Sam&quot;, Company(&quot;Arrow&quot;, Address(&quot;Functional city&quot;, Street(23, &quot;lambda street&quot;))))
+        )
+    )
+
+    val employeeStreetName =
+        Employees.employees compose // (Employees) -&gt; List&lt;Employee&gt;
+           Traversal.list() compose // (List&lt;Employee&gt;) -&gt; Employee
+           Employee.company compose // (Employee) -&gt; Company
+            Company.address compose // (Company) -&gt; Address
+             Address.street compose // (Address) -&gt; Street
+                Street.name         // (Street) -&gt; String
+
+    println(employeeStreetName.set(employees, &quot;alpha street&quot;))
+    // Employees(employees=[
+    //  Employee(name=John, company=Company(name=Arrow, address=Address(city=Functional city, street=Street(number=23, name=alpha street)))), 
+    //  Employee(name=Jane, company=Company(name=Arrow, address=Address(city=Functional city, street=Street(number=23, name=alpha street)))), 
+    //  Employee(name=Mark, company=Company(name=Arrow, address=Address(city=Functional city, street=Street(number=23, name=alpha street)))), 
+    //  Employee(name=Sam, company=Company(name=Arrow, address=Address(city=Functional city, street=Street(number=23, name=alpha street))))
+    // ])
+}
 </code></pre>
 
             </section>
@@ -580,14 +860,108 @@ p {
             </section>
         
             <section >
-                <pre><code class="language-kotlin=">// sample for compose Every
+                <p>Composed by <code>Lens</code> and <code>Prism</code></p>
+<pre><code class="language-kotlin=">import arrow.optics.Every
+import arrow.optics.optics
+
+@optics
+sealed class ContactInformation {
+    companion object {}
+
+    @optics data class Email(val value: String) : ContactInformation() { companion object }
+    @optics data class HomeAddress(val street: String) : ContactInformation() { companion object }
+    object Pigeon : ContactInformation()
+
+    @optics
+    sealed class Phone : ContactInformation() {
+        companion object {}
+
+        @optics data class MobilePhone(val number: String) : Phone() { companion object }
+        @optics data class OfficePhone(val number: String) : Phone() { companion object }
+        @optics data class HomePhone(val number: String) : Phone() { companion object }
+    }
+}
+
+@optics data class UserProfile(val name: String, val contact: ContactInformation) { companion object }
+@optics data class UserProfiles(val userProfiles: List&lt;UserProfile&gt;) { companion object }
+
+fun main() {
+    val userProfiles = UserProfiles(
+        listOf(
+            UserProfile(name = &quot;Joe&quot;, contact = ContactInformation.Email(value = &quot;joe@mail.com&quot;)),
+            UserProfile(name = &quot;Jack&quot;, contact = ContactInformation.Pigeon),
+            UserProfile(name = &quot;Mark&quot;, contact = ContactInformation.HomeAddress(street = &quot;lambda street&quot;)),
+            UserProfile(name = &quot;Sam&quot;, contact = ContactInformation.Phone.MobilePhone(number = &quot;123456789&quot;))
+        )
+    )
+
+    val userMobilePhoneNumber = UserProfiles.userProfiles compose // (UserProfiles) -&gt;  List&lt;UserProfile&gt;
+                                       Every.list() compose // (List&lt;UserProfile&gt;) -&gt; UserProfile
+                                UserProfile.contact compose // (UserProfile) -&gt; ContactInformation
+                           ContactInformation.phone compose // (ContactInformation) -&gt; Phone
+               ContactInformation.Phone.mobilePhone compose // (Phone) -&gt; MobilePhone
+        ContactInformation.Phone.MobilePhone.number         // (MobilePhone) -&gt; String
+
+    println(userMobilePhoneNumber.set(userProfiles, &quot;987654321&quot;))
+    // UserProfiles(userProfiles=[
+    //  UserProfile(name=Joe, contact=Email(value=joe@mail.com)), 
+    //  UserProfile(name=Jack, contact=playground.ContactInformation$Pigeon@4c70fda8), 
+    //  UserProfile(name=Mark, contact=HomeAddress(street=lambda street)), 
+    //  UserProfile(name=Sam, contact=MobilePhone(number=987654321))
+    // ])
+}
 </code></pre>
 
             </section>
         
             <section >
                 <p>🔍 Leverage DSL</p>
-<pre><code class="language-kotlin=">// sample for Every DSL
+<pre><code class="language-kotlin=">import arrow.optics.Every
+import arrow.optics.dsl.every
+import arrow.optics.optics
+
+@optics
+sealed class ContactInformation {
+    companion object {}
+
+    @optics data class Email(val value: String) : ContactInformation() { companion object }
+    @optics data class HomeAddress(val street: String) : ContactInformation() { companion object }
+    object Pigeon : ContactInformation()
+
+    @optics
+    sealed class Phone : ContactInformation() {
+        companion object {}
+
+        @optics data class MobilePhone(val number: String) : Phone() { companion object }
+        @optics data class OfficePhone(val number: String) : Phone() { companion object }
+        @optics data class HomePhone(val number: String) : Phone() { companion object }
+    }
+}
+
+@optics data class UserProfile(val name: String, val contact: ContactInformation) { companion object }
+@optics data class UserProfiles(val userProfiles: List&lt;UserProfile&gt;) { companion object }
+
+fun main() {
+    val userProfiles = UserProfiles(
+        listOf(
+            UserProfile(name = &quot;Joe&quot;, contact = ContactInformation.Email(value = &quot;joe@mail.com&quot;)),
+            UserProfile(name = &quot;Jack&quot;, contact = ContactInformation.Pigeon),
+            UserProfile(name = &quot;Mark&quot;, contact = ContactInformation.HomeAddress(street = &quot;lambda street&quot;)),
+            UserProfile(name = &quot;Sam&quot;, contact = ContactInformation.Phone.MobilePhone(number = &quot;123456789&quot;))
+        )
+    )
+
+    // Leverage Every DSL
+    val userMobilePhoneNumber = UserProfiles.userProfiles.every(Every.list()).contact.phone.mobilePhone.number
+
+    println(userMobilePhoneNumber.set(userProfiles, &quot;987654321&quot;))
+    // UserProfiles(userProfiles=[
+    //  UserProfile(name=Joe, contact=Email(value=joe@mail.com)),
+    //  UserProfile(name=Jack, contact=playground.ContactInformation$Pigeon@4c70fda8),
+    //  UserProfile(name=Mark, contact=HomeAddress(street=lambda street)),
+    //  UserProfile(name=Sam, contact=MobilePhone(number=987654321))
+    // ])
+}
 </code></pre>
 
             </section>
@@ -605,7 +979,7 @@ p {
 <ul>
 <li>Define an <strong>isomorphism</strong> between a type <code>S</code> and <code>A</code>
 <ul>
-<li><code>data class</code> and <code>TupleN</code></li>
+<li><code>data class</code> and <code>Pair</code> / <code>Triple</code> / <code>TupleN</code></li>
 </ul>
 </li>
 <li><strong>Invertible</strong> optic</li>
@@ -614,14 +988,103 @@ p {
             </section>
         
             <section >
-                <pre><code class="language-kotlin=">// sample for Iso
+                <pre><code class="language-kotlin=">import arrow.optics.Iso
+
+data class User(val name: String, val id: String)
+
+fun main() {
+    val userIsoPair: Iso&lt;User, Pair&lt;String, String&gt;&gt; = Iso(
+        get = { user -&gt; user.name to user.id },
+        reverseGet = { (a, b) -&gt; User(a, b) }
+    )
+
+    val user = User(&quot;Joe&quot;, &quot;111&quot;)
+    println(user) // User(name=Joe, id=111)
+    val pairUser = userIsoPair.get(user)
+    println(pairUser) // (Joe, 111)
+    val reversePairUser = userIsoPair.reverseGet(pairUser)
+    println(reversePairUser) // User(name=Joe, id=111)
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p>Generated by <code>@optics</code></p>
+<pre><code class="language-kotlin=">import arrow.optics.optics
+
+@optics data class User(val name: String, val id: String) { companion object }
+
+fun main() {
+    val user = User(&quot;Joe&quot;, &quot;111&quot;)
+    println(user) // User(name=Joe, id=111)
+    val pairUser = User.iso.get(user)
+    println(pairUser) // (Joe, 111)
+    val reversePairUser = User.iso.reverseGet(pairUser)
+    println(reversePairUser) // User(name=Joe, id=111)
+}
 </code></pre>
 
             </section>
         
             <section >
                 <p>🔍 Compose with other optics</p>
-<pre><code class="language-kotlin=">// sample for compose Iso with other optics
+<pre><code class="language-kotlin=">import arrow.optics.Every
+import arrow.optics.dsl.every
+import arrow.optics.optics
+
+@optics
+sealed class ContactInformation {
+    companion object {}
+
+    @optics data class Email(val value: String) : ContactInformation() { companion object }
+    @optics data class HomeAddress(val street: String) : ContactInformation() { companion object }
+    object Pigeon : ContactInformation()
+
+    @optics
+    sealed class Phone : ContactInformation() {
+        companion object {}
+
+        @optics data class MobilePhone(val model: String, val number: String) : Phone() { companion object }
+        @optics data class OfficePhone(val model: String, val number: String) : Phone() { companion object }
+        @optics data class HomePhone(val model: String, val number: String) : Phone() { companion object }
+    }
+}
+
+@optics data class UserProfile(val name: String, val contact: ContactInformation) { companion object }
+@optics data class UserProfiles(val userProfiles: List&lt;UserProfile&gt;) { companion object }
+
+fun main() {
+    val userProfiles = UserProfiles(
+        listOf(
+            UserProfile(name = &quot;Joe&quot;, contact = ContactInformation.Email(value = &quot;joe@mail.com&quot;)),
+            UserProfile(name = &quot;Jack&quot;, contact = ContactInformation.Pigeon),
+            UserProfile(name = &quot;Mark&quot;, contact = ContactInformation.HomeAddress(street = &quot;lambda street&quot;)),
+            UserProfile(name = &quot;Sam&quot;, contact = ContactInformation.Phone.MobilePhone(model = &quot;Pixel5&quot;, number = &quot;123456789&quot;)),
+            UserProfile(name = &quot;Tim&quot;, contact = ContactInformation.Phone.OfficePhone(model = &quot;SE125&quot;, number = &quot;112379&quot;)),
+            UserProfile(name = &quot;Hank&quot;, contact = ContactInformation.Phone.HomePhone(model = &quot;XA950&quot;, number = &quot;56431978&quot;))
+        )
+    )
+
+    val userMobilePhone = UserProfiles.userProfiles
+        .every(Every.list())
+        .contact
+        .phone
+        .mobilePhone
+        .compose(ContactInformation.Phone.MobilePhone.iso)
+
+    println(userMobilePhone.getAll(userProfiles))
+    // [(Pixel5, 123456789)]
+    println(userMobilePhone.set(userProfiles, Pair(&quot;Sony Xperia&quot;, &quot;123456789&quot;)))
+    // UserProfiles(userProfiles=[
+    //  UserProfile(name=Joe, contact=Email(value=joe@mail.com)), 
+    //  UserProfile(name=Jack, contact=playground.ContactInformation$Pigeon@57fffcd7),
+    //  UserProfile(name=Mark, contact=HomeAddress(street=lambda street)), 
+    //  UserProfile(name=Sam, contact=MobilePhone(model=Sony Xperia, number=123456789)), 
+    //  UserProfile(name=Tim, contact=OfficePhone(model=SE125, number=112379)), 
+    //  UserProfile(name=Hank, contact=HomePhone(model=XA950, number=56431978))
+    // ])
+}
 </code></pre>
 
             </section>
