@@ -324,17 +324,92 @@ p {
             <section >
                 <h3><a id="user-content-references" class="anchor" href="#references" aria-hidden="true"></a>References</h3>
 <ul>
-<li></li>
+<li><a href="https://kotlin.github.io/kotlinx.coroutines/index.html">https://kotlin.github.io/kotlinx.coroutines/index.html</a></li>
+</ul>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-what-is-a-resource-" class="anchor" href="#what-is-a-resource-" aria-hidden="true"></a>What is a resource ?</h3>
+<ul>
+<li>Database</li>
+<li>File (IO)</li>
+<li>Connection</li>
+<li>etc.</li>
 </ul>
 
             </section>
         
             <section >
-                <h3><a id="user-content-todo" class="anchor" href="#todo" aria-hidden="true"></a>TODO</h3>
-<pre><code>- bracket, bracketCase
-- Resource
-- guarantee, guaranteeCase
-- onCancel
+                <h3><a id="user-content-what-is-safe-handling-" class="anchor" href="#what-is-safe-handling-" aria-hidden="true"></a>What is safe handling ?</h3>
+<ul>
+<li>Thread safety</li>
+<li>Unchanged data state</li>
+<li>No risk of concurrent modification</li>
+<li>No need of synchronization</li>
+<li>No risk of deadlocks</li>
+</ul>
+<p>➡️ leverage Immutability</p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-immutable-data" class="anchor" href="#immutable-data" aria-hidden="true"></a>Immutable Data</h3>
+<ul>
+<li><code>val</code> ➡️ still mutable when it points to a mutable data structure
+<ul>
+<li><code>val numbers = mutableListOf(1, 2, 3)</code></li>
+</ul>
+</li>
+<li>Immutable collections ➡️ read-only
+<ul>
+<li><code>val numbers = listOf(1, 2, 3)</code></li>
+</ul>
+</li>
+<li>3rd party provided data structure for safe-accessed concurrency</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-3rd-party-libraries" class="anchor" href="#3rd-party-libraries" aria-hidden="true"></a>3rd Party Libraries</h3>
+<ul>
+<li>Arrow-kt
+<ul>
+<li><code>Atomic</code></li>
+</ul>
+</li>
+<li>Kotlinx
+<ul>
+<li><code>Mutex</code> ➡️ Mutual exclusion for coroutines</li>
+<li><code>Semaphore</code> ➡️ Counting semaphore for coroutines</li>
+<li><code>Channel</code> ➡️ Communication between a sender and a receiver
+<ul>
+<li><font size="6">similar to <code>BlockingQueue</code> in Java, but with <strong>suspending</strong> operations</font></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>etc.</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-atomic" class="anchor" href="#atomic" aria-hidden="true"></a>Atomic</h3>
+<ul>
+<li>provided by <a href="https://arrow-kt.io/docs/apidocs/arrow-fx-coroutines/arrow.fx.coroutines/-atomic/">Arrow-kt</a></li>
+<li>A wrapper around Kotlinx <code>AtomicFU</code></li>
+</ul>
+<pre><code class="language-kotlin=">// sample for atomic
 </code></pre>
 
             </section>
@@ -346,10 +421,410 @@ p {
 
 
     
+    <section>
         <section >
-            
-            
+            <h3><a id="user-content-working-with-a-resource" class="anchor" href="#working-with-a-resource" aria-hidden="true"></a>Working with a resource</h3>
+<ul>
+<li>Acquisition</li>
+<li>Using</li>
+<li>Releasing ➡️ always need to do</li>
+</ul>
+<p>🔍 Asynchronous &amp; Coroutines</p>
+<p>🔍 Dependency Injection</p>
+
             </section>
+        
+            <section >
+                <h3><a id="user-content-try--catch--finally" class="anchor" href="#try--catch--finally" aria-hidden="true"></a>Try / Catch / Finally</h3>
+<ul>
+<li>Problems with handling <code>cancel()</code> in <strong>coroutines</strong>
+<ul>
+<li><code>catch</code> captures also <code>CancellationException</code></li>
+<li><code>acquire</code> and <code>release</code> need to be <code>NonCancellable</code></li>
+</ul>
+</li>
+<li>Can become messy with segregated error handling</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">// sample for try/catch/finally with CancellationException, NonCancellable
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-safe-resource-handling-1" class="anchor" href="#safe-resource-handling-1" aria-hidden="true"></a>Safe Resource Handling</h3>
+<ul>
+<li><code>bracket</code> &amp; <code>bracketCase</code></li>
+<li><code>Resource</code></li>
+<li><code>guarantee</code> &amp; <code>guaranteeCase</code></li>
+<li><code>onCancel</code></li>
+<li><code>CircuitBreaker</code></li>
+<li>provided by <a href="https://arrow-kt.io/docs/fx/">Arrow-kt</a></li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-arrow-fx" class="anchor" href="#arrow-fx" aria-hidden="true"></a>Arrow Fx</h3>
+<p><a href="https://arrow-kt.io/docs/fx/">https://arrow-kt.io/docs/fx/</a>
+<img src="img/resource.png" alt=""></p>
+
+            </section>
+        
+            <section >
+                <p>🔍 Acquire, use, and release resources <em>regardless of how and from where they are used</em>.</p>
+<p>🔍 Supports any other Arrow Fx operators</p>
+<p>➡️ <code>suspend</code> !</p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-always-release" class="anchor" href="#always-release" aria-hidden="true"></a>Always release</h3>
+<p>A resource should be released in 3 cases</p>
+<ul>
+<li>Completion</li>
+<li>Cancellation</li>
+<li>Failure</li>
+</ul>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-bracket" class="anchor" href="#bracket" aria-hidden="true"></a>bracket</h3>
+<p>Declare <code>acquire</code>, <code>use</code>, and <code>release</code></p>
+<pre><code class="language-kotlin=">// sample for bracket definition
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-bracketcase" class="anchor" href="#bracketcase" aria-hidden="true"></a>bracketCase</h3>
+<p>Same as <code>bracket</code>, but <code>release</code> by case</p>
+<pre><code class="language-kotlin=">// sample for bracketCase definition
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-error-handling" class="anchor" href="#error-handling" aria-hidden="true"></a>Error Handling</h3>
+<ul>
+<li>Release if there is an error while using the resource</li>
+<li><code>bracket</code> and <code>bracketCase</code> will rethrow exceptions
+<ul>
+<li>➡️ use <code>Either.catch {}</code></li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">// sample for bracketCase error handling
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-cancellation-handling" class="anchor" href="#cancellation-handling" aria-hidden="true"></a>Cancellation Handling</h3>
+<p>Release when the coroutine is cancelled</p>
+<pre><code class="language-kotlin=">// sample for bracketCase Cancellation handling
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p>If you fail or cancel on <code>acquire</code>, <code>release</code> is not called</p>
+<p>➡️ Can’t release something we never acquired</p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-limitations" class="anchor" href="#limitations" aria-hidden="true"></a>Limitations</h3>
+<p><code>bracket</code> and <code>bracketCase</code> tied to decide how to <strong>use</strong> the resource when we <code>acquire</code> it</p>
+<p>➡️ Can we separate <code>acquire</code> and <code>use</code> ?</p>
+<pre><code class="language-kotlin=">// sample for bracket and bracketCase definition
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-resource" class="anchor" href="#resource" aria-hidden="true"></a>Resource</h3>
+<ul>
+<li>Declare <code>acquire</code> and <code>release</code></li>
+<li>It’s a datatype
+<ul>
+<li>➡️ we can pass around or inject and reuse</li>
+</ul>
+</li>
+<li>It’s a <strong>Monad</strong>
+<ul>
+<li>➡️ <code>map</code>, <code>flatMap</code>, <code>traverse</code>, …</li>
+<li>➡️ compose with other <code>suspend</code> operations</li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">// sample for Resource
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p><font size="6">⚠️ Can be inefficient to acquire and release every time if we have many operations to perform over the same resource</font></p>
+<pre><code class="language-kotlin=">// sample for use the same item several times
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-solve-the-inefficiency" class="anchor" href="#solve-the-inefficiency" aria-hidden="true"></a>Solve the Inefficiency</h3>
+<ul>
+<li>Fit everything inside the <code>use</code> lambda</li>
+<li>Leverage architecture design
+<ul>
+<li>➡️ reuse connection from a pool</li>
+</ul>
+</li>
+<li>Push the problem into implementation details</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <p><font size="6">🔍 Resources guarantee that their release finalizers are always invoked in the correct <strong>order</strong></font></p>
+<pre><code class="language-kotlin=">// sample for Resource with sequence source 
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p>If you fail or cancel on <code>acquire</code>, <code>release</code> is not called</p>
+<p>➡️ Can’t release something we never acquired</p>
+<p>🔍 <code>acquire</code> &amp; <code>release</code> step are <code>NonCancellable</code></p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-resource-dsl" class="anchor" href="#resource-dsl" aria-hidden="true"></a>Resource DSL</h3>
+<p><code>resource</code> with <code>release</code> / <code>releaseCase</code></p>
+<pre><code class="language-kotlin=">// sample for Resource DSL
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-error-handling-1" class="anchor" href="#error-handling-1" aria-hidden="true"></a>Error Handling</h3>
+<ul>
+<li>Release if there is an error while using the resource</li>
+<li><code>use</code> will rethrow exceptions
+<ul>
+<li>➡️ use <code>Either.catch {}</code></li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">// sample for Resource error handling
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-cancellation-handling-1" class="anchor" href="#cancellation-handling-1" aria-hidden="true"></a>Cancellation Handling</h3>
+<p>Release when the coroutine is cancelled</p>
+<pre><code class="language-kotlin=">// sample for Resource Cancellation handling
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-guarantee" class="anchor" href="#guarantee" aria-hidden="true"></a>guarantee</h3>
+<ul>
+<li>Guarantee execution of a given <code>finalizer</code> after <code>fa</code> regardless of success, error or cancellation</li>
+<li>Not meant for handling resources but any suspended effects</li>
+</ul>
+<pre><code class="language-kotlin=">// sample for guarantee definition
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-guaranteecase" class="anchor" href="#guaranteecase" aria-hidden="true"></a>guaranteeCase</h3>
+<p>Same as <code>guarantee</code>, but <code>finalizer</code> with case</p>
+<pre><code class="language-kotlin=">// sample for guaranteeCase definition
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-error-handling-2" class="anchor" href="#error-handling-2" aria-hidden="true"></a>Error Handling</h3>
+<ul>
+<li>Run <code>finalizer</code> if there is an error while running the effect</li>
+<li><code>guarantee</code> and <code>guaranteeCase</code> will rethrow exceptions after running <code>finalizer</code>
+<ul>
+<li>➡️ use <code>Either.catch {}</code></li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">// sample for guaranteeCase error handling
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-cancellation-handling-2" class="anchor" href="#cancellation-handling-2" aria-hidden="true"></a>Cancellation Handling</h3>
+<p>Run <code>finalizer</code> when the coroutine is cancelled</p>
+<pre><code class="language-kotlin=">// sample for guaranteeCase Cancellation handling
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-oncancel" class="anchor" href="#oncancel" aria-hidden="true"></a>onCancel</h3>
+<p>Register an <code>onCancel</code> handler after <code>fa</code></p>
+<p>➡️ only be invoked when the coroutine is cancelled</p>
+<pre><code class="language-kotlin=">// sample for onCancel Cancellation handling
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-circuitbreaker" class="anchor" href="#circuitbreaker" aria-hidden="true"></a>CircuitBreaker</h3>
+<p><font size="6">🔍 Detect failures and prevent a failure from constantly recurring</font></p>
+<p>➡️ <strong>Protect</strong> resources or services from being overloaded</p>
+
+            </section>
+        
+            <section >
+                <p><code>CircuitBreaker</code> has 3 <code>CircuitBreaker.State</code></p>
+<ul>
+<li><code>Closed</code>
+<ul>
+<li>➡️ normal state</li>
+</ul>
+</li>
+<li><code>Open</code>
+<ul>
+<li>➡️ short-circuit/fail-fast all requests</li>
+</ul>
+</li>
+<li><code>HalfOpen</code>
+<ul>
+<li>➡️ while it’s allowing a request to go through, as a <em>test request</em></li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">// sample for CircuitBreaker
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-recap-1" class="anchor" href="#recap-1" aria-hidden="true"></a>Recap #1</h3>
+<ul>
+<li>Safe Resource Handling leverages Immutability
+<ul>
+<li><code>Atomic</code>, <code>Mutex</code>, <code>Semaphore</code>, <code>Channel</code>, …</li>
+</ul>
+</li>
+<li>Handle Resource
+<ul>
+<li><code>bracket</code> &amp; <code>bracketCase</code> ➡️ <code>acquire</code>, <code>use</code>, <code>release</code></li>
+<li><code>Resource</code> ➡️ <code>acquire</code>, <code>release</code>
+<ul>
+<li>guarantee release finalizers are always invoked in the correct <strong>order</strong></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-recap-2" class="anchor" href="#recap-2" aria-hidden="true"></a>Recap #2</h3>
+<ul>
+<li>Handle Effect
+<ul>
+<li><code>guarantee</code> &amp; <code>guaranteeCase</code> ➡️ <code>fa</code>, <code>finalizer</code></li>
+<li><code>onCancel</code> ➡️ <code>fa</code>, <code>onCancel</code></li>
+</ul>
+</li>
+<li><code>CircuitBreaker</code> ➡️ <code>Closed</code>, <code>Open</code>, <code>HalfOpen</code>
+<ul>
+<li><strong>Protect</strong> resources or services from being overloaded</li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+
+    </section>
     
 
 
