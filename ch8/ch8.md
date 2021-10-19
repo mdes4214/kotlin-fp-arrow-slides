@@ -9,7 +9,7 @@ title: "Kotlin FP with Arrow"
 ---
 
 #### ch 8. 
-### Functional Programming
+### Functional Architecture
 
 <style>
 pre {

@@ -65,7 +65,7 @@ Jack Lo
 5. [Kotlin Coroutine & Parallelization](../ch5/export/)
 6. [Safe Resource Handling](../ch6/export/)
 7. [Kotlin Flow](../ch7/export/)
-8. [Functional Programming](../ch8/export/)
+8. [Functional Architecture](../ch8/export/)
 
 ---
 
