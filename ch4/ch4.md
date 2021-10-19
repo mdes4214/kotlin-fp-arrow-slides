@@ -115,7 +115,12 @@ input ➡️ Success / Failure output
 ➡️ Errors on `Left` side as convention
 
 ```kotlin=
-// Either sealed class
+sealed class Either<out A, out B> {
+  data class Left<out A>(val a: A) : Either<A, Nothing>()
+  data class Right<out B>(val b: B) : Either<Nothing, B>()
+
+  // ... map, flatMap, fold...
+}
 // `Nothing` used for the "non-relevant" side
 ```
 
@@ -130,6 +135,32 @@ input ➡️ Success / Failure output
 
 **⚠️ Unwieldy !**
 
+
+--
+
+```kotlin=
+fun main() {
+    val charSequence: CharSequence = "Hello!"
+
+    charSequence.repeat(-1)
+    // This may throws an IllegalArgumentException and it doesn't show explicitly!
+    // We need to make sure we catch the exception!
+}
+```
+
+```kotlin=
+/**
+ * Returns a string containing this char sequence repeated [n] times.
+ * @throws [IllegalArgumentException] when n < 0.
+ * @sample samples.text.Strings.repeat
+ */
+public actual fun CharSequence.repeat(n: Int): String {
+    require(n >= 0) { "Count 'n' must be non-negative, but was $n." }
+
+    // ...
+}
+```
+
 --
 
 ### 🔍 with Either
@@ -139,8 +170,45 @@ input ➡️ Success / Failure output
 - More exhaustive
   - ➡️ enforce callers to treat both sides
 
+--
+
 ```kotlin=
-// Sample for Either (left和right都要)
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
+import other.model.*
+
+sealed class Error {
+    object UploadFileError : Error()
+    object FileNotFound : Error()
+}
+
+// Left for error
+fun uploadFile(file: CustomFile): Either<Error.UploadFileError, CustomFile> =
+    Error.UploadFileError.left()
+
+// Right for success
+fun downloadFile(fileName: FileName): Either<Error.FileNotFound, CustomFile> =
+    CustomFile(
+        header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Note A"), Author("Joe"))),
+        content = Content("Note A Content"),
+        fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(".doc")),
+        name = FileName("Note_A")
+    ).right()
+
+fun main() {
+    val file = CustomFile(
+        header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Note A"), Author("Joe"))),
+        content = Content("Note A Content"),
+        fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(".doc")),
+        name = FileName("Note_A")
+    )
+
+    println(uploadFile(file))
+    // Either.Left(playground.Error$UploadFileError@13fee20c)
+    println(downloadFile(file.name))
+    // Either.Right(CustomFile(header=CustomHeader(metadata=CustomMetadata(tag=TYPE_C, title=Title(value=Note A), author=Author(value=Joe))), content=Content(value=Note A Content), fileFormat=DocumentFile(extension=DocumentFileExtension(value=.doc)), name=FileName(value=Note_A)))
+}
 ```
 
 --
@@ -150,7 +218,31 @@ input ➡️ Success / Failure output
 ➡️ `fold`
 
 ```kotlin=
-// sample for fold
+import arrow.core.Either
+import arrow.core.right
+import other.model.*
+
+sealed class Error {
+    object UploadFileError : Error()
+    object FileNotFound : Error()
+}
+
+fun downloadFile(fileName: FileName): Either<Error.FileNotFound, CustomFile> =
+    CustomFile(
+        header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Note A"), Author("Joe"))),
+        content = Content("Note A Content"),
+        fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(".doc")),
+        name = FileName("Note_A")
+    ).right()
+
+fun main() {
+    val fileName = FileName("Note_A")
+    downloadFile(fileName).fold(
+        ifLeft = { error -> println(error) },
+        ifRight = { customFile -> println("File downloaded: $customFile") }
+    )
+    // File downloaded: CustomFile(header=CustomHeader(metadata=CustomMetadata(tag=TYPE_C, title=Title(value=Note A), author=Author(value=Joe))), content=Content(value=Note A Content), fileFormat=DocumentFile(extension=DocumentFileExtension(value=.doc)), name=FileName(value=Note_A))
+}
 ```
 
 --
@@ -179,7 +271,41 @@ input ➡️ Success / Failure output
 - A kind of the *M*-word ➡️ **`Monad`**
 
 ```kotlin=
-// sample for flatMap (串兩三個Either)
+import arrow.core.Either
+import arrow.core.flatMap
+import arrow.core.right
+import other.model.*
+
+sealed class Error {
+    object UploadFileError : Error()
+    object FileNotFound : Error()
+    object InvalidTag : Error()
+}
+
+fun downloadFile(fileName: FileName): Either<Error.FileNotFound, CustomFile> =
+    CustomFile(
+        header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Note A"), Author("Joe"))),
+        content = Content("Note A Content"),
+        fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(".doc")),
+        name = FileName("Note_A")
+    ).right()
+
+fun updateTag(file: CustomFile, newTag: Tag): Either<Error.InvalidTag, CustomFile> =
+    CustomFile.header.metadata.tag.set(file, newTag).right()
+
+fun uploadFile(file: CustomFile): Either<Error.UploadFileError, CustomFile> =
+    file.right()
+
+fun main() {
+    val fileName = FileName("Note_A")
+    val newTag = Tag.TYPE_A
+    val updatedFileTag = downloadFile(fileName)
+        .flatMap { customFile -> updateTag(customFile, newTag) }
+        .flatMap { customFile -> uploadFile(customFile) }
+        .map { customFile -> customFile.header.metadata.tag }
+
+    println(updatedFileTag) // Either.Right(TYPE_A)
+}
 ```
 
 --
@@ -198,7 +324,37 @@ input ➡️ Success / Failure output
 --
 
 ```kotlin=
-// sample for short circuit
+import arrow.core.Either
+import arrow.core.flatMap
+import arrow.core.left
+import arrow.core.right
+import other.model.*
+
+sealed class Error {
+    object UploadFileError : Error()
+    object FileNotFound : Error()
+    object InvalidTag : Error()
+}
+
+fun downloadFile(fileName: FileName): Either<Error.FileNotFound, CustomFile> =
+    Error.FileNotFound.left() // Error happened!
+
+fun updateTag(file: CustomFile, newTag: Tag): Either<Error.InvalidTag, CustomFile> =
+    CustomFile.header.metadata.tag.set(file, newTag).right()
+
+fun uploadFile(file: CustomFile): Either<Error.UploadFileError, CustomFile> =
+    file.right()
+
+fun main() {
+    val fileName = FileName("Note_A")
+    val newTag = Tag.TYPE_A
+    val updatedFileTag = downloadFile(fileName) // short circuit: Either.Left(playground.Error$FileNotFound@79b4d0f)
+        .flatMap { customFile -> updateTag(customFile, newTag) }
+        .flatMap { customFile -> uploadFile(customFile) }
+        .map { customFile -> customFile.header.metadata.tag }
+
+    println(updatedFileTag) // Either.Left(playground.Error$FileNotFound@79b4d0f)
+}
 ```
 
 --
@@ -208,7 +364,43 @@ input ➡️ Success / Failure output
 ➡️ Translate to chain of `flatMap` at compile time
 
 ```kotlin=
-// sample for flatMap (串兩三個Either) => 改寫成either.eager{}
+import arrow.core.Either
+import arrow.core.computations.either
+import arrow.core.right
+import other.model.*
+
+sealed class Error {
+    object UploadFileError : Error()
+    object FileNotFound : Error()
+    object InvalidTag : Error()
+}
+
+fun downloadFile(fileName: FileName): Either<Error.FileNotFound, CustomFile> =
+    CustomFile(
+        header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Note A"), Author("Joe"))),
+        content = Content("Note A Content"),
+        fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(".doc")),
+        name = FileName("Note_A")
+    ).right()
+
+fun updateTag(file: CustomFile, newTag: Tag): Either<Error.InvalidTag, CustomFile> =
+    CustomFile.header.metadata.tag.set(file, newTag).right()
+
+fun uploadFile(file: CustomFile): Either<Error.UploadFileError, CustomFile> =
+    file.right()
+
+fun main() {
+    val fileName = FileName("Note_A")
+    val newTag = Tag.TYPE_A
+    val updatedFileTag: Either<Error, Tag> = either.eager {
+        val downloadedFile = downloadFile(fileName).bind()
+        val updatedTagFile = updateTag(downloadedFile, newTag).bind()
+        val uploadedFile = uploadFile(updatedTagFile).bind()
+        uploadedFile.header.metadata.tag
+    }
+
+    println(updatedFileTag) // Either.Right(TYPE_A)
+}
 ```
 
 --
@@ -221,10 +413,40 @@ input ➡️ Success / Failure output
 
 --
 
-🔍 Define a `toDomain` method to map `Throwable` to **domain error**
+🔍 Remember to map the 3rd party error to **domain error**
 
 ```kotlin=
-// sample for Either.catch {} (注意e.toDomain)
+import arrow.core.Either
+import other.model.CustomFile
+import other.model.Tag
+
+sealed class Error {
+    object UploadFileError : Error()
+    object FileNotFound : Error()
+    object InvalidTag : Error()
+    data class InvalidProcess(val msg: String) : Error()
+
+    companion object {
+        // map 3rd party error to domain error
+        fun fromExternal(e: Throwable): Error = InvalidProcess(msg = "Exception in external service: $e")
+    }
+}
+
+class FileStorageService {
+    // stubbed network request failure
+    suspend fun findByTag(tag: Tag): List<CustomFile> = throw RuntimeException("Connection Error!")
+}
+
+suspend fun main() {
+    val tag = Tag.TYPE_A
+    val fileStorageService = FileStorageService()
+    val foundFiles: Either<Error, List<CustomFile>> =
+        Either.catch { fileStorageService.findByTag(tag) } // Left(RuntimeException("Connection Error!"))
+            .mapLeft { e -> Error.fromExternal(e) }
+
+    println(foundFiles)
+    // Either.Left(InvalidProcess(msg=Exception in external service: java.lang.RuntimeException: Connection Error!))
+}
 ```
 
 ---
