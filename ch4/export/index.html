@@ -732,7 +732,7 @@ fun main() {
             </section>
         
             <section >
-                <p>🔍 Remember to map the 3rd party error to <strong>domain error</strong></p>
+                <p>🔍 Map the 3rd party error to <strong>domain error</strong></p>
 <pre><code class="language-kotlin=">import arrow.core.Either
 import other.model.CustomFile
 import other.model.Tag
@@ -793,7 +793,12 @@ suspend fun main() {
 <ul>
 <li><code>Invalid</code> side and <code>Valid</code> side</li>
 </ul>
-<pre><code class="language-kotlin=">// sample for Validated implement sealed class
+<pre><code class="language-kotlin=">sealed class Validated&lt;out E, out A&gt; {
+  data class Valid&lt;out A&gt;(val a: A) : Validated&lt;Nothing, A&gt;()
+  data class Invalid&lt;out E&gt;(val e: E) : Validated&lt;E, Nothing&gt;()
+
+  // ... map, flatMap, fold...
+}
 </code></pre>
 
             </section>
@@ -816,28 +821,182 @@ suspend fun main() {
         
             <section >
                 <h3><a id="user-content-validatednel-1" class="anchor" href="#validatednel-1" aria-hidden="true"></a>ValidatedNel</h3>
-<pre><code class="language-kotlin=">// sample for ValidatedNel implement sealed class
+<pre><code class="language-kotlin=">sealed class Validated&lt;out E, out A&gt; {
+  data class Valid&lt;out A&gt;(val a: A) : Validated&lt;Nothing, A&gt;()
+  data class Invalid&lt;out E&gt;(val e: E) : Validated&lt;E, Nothing&gt;()
+}
+
+// NonEmptyList&lt;E&gt; to accumulate errors
+typealias ValidatedNel&lt;E, A&gt; = Validated&lt;NonEmptyList&lt;E&gt;, A&gt;
 </code></pre>
 
             </section>
         
             <section >
                 <h3><a id="user-content-define-validate-functions" class="anchor" href="#define-validate-functions" aria-hidden="true"></a>Define Validate Functions</h3>
-<pre><code class="language-kotlin=">// sample for ValidateNel functions (可以用檢查表單欄位當例子)
+<pre><code class="language-kotlin=">fun validateTag(tag: String): ValidatedNel&lt;Error.ValidationError, Tag&gt; =
+    if (!Tag.values().any { it.name == tag }) {
+        Error.ValidationError(&quot;Tag is invalid&quot;).invalidNel()
+    }
+    else {
+        Tag.valueOf(tag).validNel()
+    }
+
+fun validateTitle(title: String): ValidatedNel&lt;Error.ValidationError, Title&gt; =
+    if (title.isBlank()) {
+        Error.ValidationError(&quot;Title cannot be blank&quot;).invalidNel()
+    }
+    else {
+        Title(title).validNel()
+    }
+
+fun validateAuthor(author: String): ValidatedNel&lt;Error.ValidationError, Author&gt; =
+    if (!author.matches(&quot;^[a-zA-Z]*$&quot;.toRegex())) {
+        Error.ValidationError(&quot;Author needs to be alphabet&quot;).invalidNel()
+    } else {
+        Author(author).validNel()
+    }
 </code></pre>
 
             </section>
         
             <section >
                 <h3><a id="user-content-zip-to-accumulate" class="anchor" href="#zip-to-accumulate" aria-hidden="true"></a>Zip to Accumulate</h3>
-<pre><code class="language-kotlin=">// sample for zip in ValidateNel
+<pre><code class="language-kotlin=">import arrow.core.ValidatedNel
+import arrow.core.invalidNel
+import arrow.core.validNel
+import arrow.core.zip
+import other.model.Author
+import other.model.CustomMetadata
+import other.model.Tag
+import other.model.Title
+
+
+sealed class Error {
+    // ... //
+    data class ValidationError(val msg: String) : Error()
+}
+
+fun validateTag(tag: String): ValidatedNel&lt;Error.ValidationError, Tag&gt; =
+    if (!Tag.values().any { it.name == tag }) {
+        Error.ValidationError(&quot;Tag is invalid&quot;).invalidNel()
+    }
+    else {
+        Tag.valueOf(tag).validNel()
+    }
+
+fun validateTitle(title: String): ValidatedNel&lt;Error.ValidationError, Title&gt; =
+    if (title.isBlank()) {
+        Error.ValidationError(&quot;Title cannot be blank&quot;).invalidNel()
+    }
+    else {
+        Title(title).validNel()
+    }
+
+fun validateAuthor(author: String): ValidatedNel&lt;Error.ValidationError, Author&gt; =
+    if (!author.matches(&quot;^[a-zA-Z]*$&quot;.toRegex())) {
+        Error.ValidationError(&quot;Author needs to be alphabet&quot;).invalidNel()
+    } else {
+        Author(author).validNel()
+    }
+
+fun main() {
+    val myMetadata = validateTag(&quot;TYPE_C&quot;).zip(
+        validateTitle(&quot;Functional Programming in Kotlin&quot;),
+        validateAuthor(&quot;Joe&quot;)
+    ) { tag, title, author -&gt;
+        CustomMetadata(tag, title, author)
+    }
+
+    println(myMetadata)
+    // Validated.Valid(CustomMetadata(
+    //  tag=TYPE_C, 
+    //  title=Title(value=Functional Programming in Kotlin), 
+    //  author=Author(value=Joe)
+    // ))
+
+    val strangeMetadata = validateTag(&quot;TYPE_Z&quot;).zip(
+        validateTitle(&quot;&quot;),
+        validateAuthor(&quot;^_^&quot;)
+    ) { tag, title, author -&gt;
+        CustomMetadata(tag, title, author)
+    }
+
+    println(strangeMetadata)
+    // Validated.Invalid(NonEmptyList(
+    //  ValidationError(msg=Tag is invalid),
+    //  ValidationError(msg=Title cannot be blank),
+    //  ValidationError(msg=Author needs to be alphabet)
+    // ))
+}
 </code></pre>
 
             </section>
         
             <section >
                 <h3><a id="user-content-validate-domain-model-creation" class="anchor" href="#validate-domain-model-creation" aria-hidden="true"></a>Validate Domain Model Creation</h3>
-<pre><code class="language-kotlin=">// Sample for validate when domain model create
+<p>➡️ Validate how we construct data</p>
+<pre><code class="language-kotlin=">import arrow.core.*
+import other.model.Author
+import other.model.Tag
+import other.model.Title
+
+sealed class Error {
+    // ... //
+    data class ValidationError(val msg: String) : Error()
+}
+
+@JvmInline
+value class SimpleFileName private constructor(val value: String) {
+    companion object {
+        fun create(value: String): ValidatedNel&lt;Error.ValidationError, SimpleFileName&gt; = when {
+            !value.matches(&quot;^[a-zA-Z0-9_-]*\$&quot;.toRegex()) -&gt; Error.ValidationError(&quot;FileName needs to be alphanumeric, underline, or hyphen&quot;).invalidNel()
+            value.isBlank() -&gt; Error.ValidationError(&quot;FileName cannot be blank&quot;).invalidNel()
+            else -&gt; Valid(SimpleFileName(value)) // SimpleFileName(value).validNel()
+        }
+    }
+}
+
+@JvmInline
+value class SimpleFileFormat private constructor(val value: String) {
+    companion object {
+        fun create(value: String): ValidatedNel&lt;Error.ValidationError, SimpleFileFormat&gt; = when {
+            !value.matches(&quot;^\\.[a-zA-Z]*\$&quot;.toRegex()) -&gt; Error.ValidationError(&quot;FileFormat needs to be alphabet and start with dot&quot;).invalidNel()
+            value.isBlank() -&gt; Error.ValidationError(&quot;FileFormat cannot be blank&quot;).invalidNel()
+            else -&gt; Valid(SimpleFileFormat(value)) // SimpleFileFormat(value).validNel()
+        }
+    }
+}
+
+data class SimpleFile(
+    val name: SimpleFileName,
+    val fileFormat: SimpleFileFormat
+)
+
+fun main() {
+    val myFile = SimpleFileName.create(&quot;FP_note&quot;).zip(
+        SimpleFileFormat.create(&quot;.doc&quot;)
+    ) { fileName, fileFormat -&gt;
+        SimpleFile(fileName, fileFormat)
+    }
+
+    println(myFile)
+    // Validated.Valid(SimpleFile(
+    //  name=SimpleFileName(value=FP_note), 
+    //  fileFormat=SimpleFileFormat(value=.doc)
+    // ))
+
+    val strangeFile = SimpleFileName.create(&quot;Hello.World!&quot;).zip(
+        SimpleFileFormat.create(&quot;.png&quot;) // only file format is valid
+    ) { fileName, fileFormat -&gt;
+        SimpleFile(fileName, fileFormat)
+    }
+
+    println(strangeFile)
+    // Validated.Invalid(NonEmptyList(
+    //  ValidationError(msg=FileName needs to be alphanumeric, underline, or hyphen)
+    // ))
+}
 </code></pre>
 
             </section>
@@ -869,7 +1028,91 @@ suspend fun main() {
         
             <section >
                 <h3><a id="user-content-either--validated" class="anchor" href="#either--validated" aria-hidden="true"></a>Either &amp; Validated</h3>
-<pre><code class="language-kotlin=">// sample for Either &amp; Validated (用either.eager{}包起來，檢查表單欄位後送出)
+<pre><code class="language-kotlin=">import arrow.core.*
+import arrow.core.computations.either
+import other.model.*
+
+data class RawMetadata(
+    val tag: String,
+    val title: String,
+    val author: String
+)
+
+sealed class Error {
+    object UploadFileError : Error()
+    object FileNotFound : Error()
+    object UpdateMetadataError : Error()
+    data class ValidationError(val msg: String) : Error()
+    data class InvalidMetadataError(val nel: List&lt;ValidationError&gt;) : Error()
+}
+
+fun ValidatedNel&lt;Error.ValidationError, CustomMetadata&gt;.toDomainError(): Validated&lt;Error.InvalidMetadataError, CustomMetadata&gt; =
+    mapLeft { Error.InvalidMetadataError(it) }
+
+fun validateTag(tag: String): ValidatedNel&lt;Error.ValidationError, Tag&gt; =
+    if (!Tag.values().any { it.name == tag }) {
+        Error.ValidationError(&quot;Tag is invalid&quot;).invalidNel()
+    } else {
+        Tag.valueOf(tag).validNel()
+    }
+
+fun validateTitle(title: String): ValidatedNel&lt;Error.ValidationError, Title&gt; =
+    if (title.isBlank()) {
+        Error.ValidationError(&quot;Title cannot be blank&quot;).invalidNel()
+    } else {
+        Title(title).validNel()
+    }
+
+fun validateAuthor(author: String): ValidatedNel&lt;Error.ValidationError, Author&gt; =
+    if (!author.matches(&quot;^[a-zA-Z]*$&quot;.toRegex())) {
+        Error.ValidationError(&quot;Author needs to be alphabet&quot;).invalidNel()
+    } else {
+        Author(author).validNel()
+    }
+
+fun validateMetadata(tag: String, title: String, author: String): ValidatedNel&lt;Error.ValidationError, CustomMetadata&gt; =
+    validateTag(tag).zip(
+        validateTitle(title),
+        validateAuthor(author)
+    ) { tag, title, author -&gt;
+        CustomMetadata(tag, title, author)
+    }
+
+fun downloadFile(fileName: FileName): Either&lt;Error.FileNotFound, CustomFile&gt; =
+    CustomFile(
+        header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title(&quot;Note A&quot;), Author(&quot;Joe&quot;))),
+        content = Content(&quot;Note A Content&quot;),
+        fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(&quot;.doc&quot;)),
+        name = FileName(&quot;Note_A&quot;)
+    ).right()
+
+fun updateMetadata(file: CustomFile, newMetadata: CustomMetadata): Either&lt;Error.UpdateMetadataError, CustomFile&gt; =
+    CustomFile.header.metadata.set(file, newMetadata).right()
+
+fun uploadFile(file: CustomFile): Either&lt;Error.UploadFileError, CustomFile&gt; =
+    file.right()
+
+fun updateCloudMetadata(targetFileName: FileName, newRawMetadata: RawMetadata): Either&lt;Error, CustomMetadata&gt; =
+    either.eager {
+        val downloadedFile = downloadFile(targetFileName).bind()
+        val validMetadata = validateMetadata(newRawMetadata.tag, newRawMetadata.title, newRawMetadata.author).toDomainError().bind()
+        val updatedMetadataFile = updateMetadata(downloadedFile, validMetadata).bind()
+        val uploadedFile = uploadFile(updatedMetadataFile).bind()
+        uploadedFile.header.metadata
+    }
+
+fun main() {
+    val fileName = FileName(&quot;Note_A&quot;)
+    val newRawMetadata = RawMetadata(&quot;TYPE_A&quot;, &quot;Functional Programming in Kotlin&quot;, &quot;Joe&quot;)
+    val updatedFileMetadata = updateCloudMetadata(fileName, newRawMetadata)
+
+    println(updatedFileMetadata) // Either.Right(CustomMetadata(tag=TYPE_A, title=Title(value=Functional Programming in Kotlin), author=Author(value=Joe)))
+
+    val strangeRawMetadata = RawMetadata(&quot;TYPE_Z&quot;, &quot;Functional Programming in Kotlin&quot;, &quot;Joe&quot;)
+    val strangeFileMetadata = updateCloudMetadata(fileName, strangeRawMetadata)
+
+    println(strangeFileMetadata) // Either.Left(InvalidMetadataError(nel=NonEmptyList(ValidationError(msg=Tag is invalid))))
+}
 </code></pre>
 
             </section>

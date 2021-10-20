@@ -413,7 +413,7 @@ fun main() {
 
 --
 
-🔍 Remember to map the 3rd party error to **domain error**
+🔍 Map the 3rd party error to **domain error**
 
 ```kotlin=
 import arrow.core.Either
@@ -468,7 +468,12 @@ Sometimes it would be nice to **have all of these errors** reported simultaneous
 - `Invalid` side and `Valid` side
 
 ```kotlin=
-// sample for Validated implement sealed class
+sealed class Validated<out E, out A> {
+  data class Valid<out A>(val a: A) : Validated<Nothing, A>()
+  data class Invalid<out E>(val e: E) : Validated<E, Nothing>()
+
+  // ... map, flatMap, fold...
+}
 ```
 
 --
@@ -491,7 +496,13 @@ Sometimes it would be nice to **have all of these errors** reported simultaneous
 ### ValidatedNel
 
 ```kotlin=
-// sample for ValidatedNel implement sealed class
+sealed class Validated<out E, out A> {
+  data class Valid<out A>(val a: A) : Validated<Nothing, A>()
+  data class Invalid<out E>(val e: E) : Validated<E, Nothing>()
+}
+
+// NonEmptyList<E> to accumulate errors
+typealias ValidatedNel<E, A> = Validated<NonEmptyList<E>, A>
 ```
 
 --
@@ -499,7 +510,28 @@ Sometimes it would be nice to **have all of these errors** reported simultaneous
 ### Define Validate Functions
 
 ```kotlin=
-// sample for ValidateNel functions (可以用檢查表單欄位當例子)
+fun validateTag(tag: String): ValidatedNel<Error.ValidationError, Tag> =
+    if (!Tag.values().any { it.name == tag }) {
+        Error.ValidationError("Tag is invalid").invalidNel()
+    }
+    else {
+        Tag.valueOf(tag).validNel()
+    }
+
+fun validateTitle(title: String): ValidatedNel<Error.ValidationError, Title> =
+    if (title.isBlank()) {
+        Error.ValidationError("Title cannot be blank").invalidNel()
+    }
+    else {
+        Title(title).validNel()
+    }
+
+fun validateAuthor(author: String): ValidatedNel<Error.ValidationError, Author> =
+    if (!author.matches("^[a-zA-Z]*$".toRegex())) {
+        Error.ValidationError("Author needs to be alphabet").invalidNel()
+    } else {
+        Author(author).validNel()
+    }
 ```
 
 --
@@ -507,15 +539,143 @@ Sometimes it would be nice to **have all of these errors** reported simultaneous
 ### Zip to Accumulate
 
 ```kotlin=
-// sample for zip in ValidateNel
+import arrow.core.ValidatedNel
+import arrow.core.invalidNel
+import arrow.core.validNel
+import arrow.core.zip
+import other.model.Author
+import other.model.CustomMetadata
+import other.model.Tag
+import other.model.Title
+
+
+sealed class Error {
+    // ... //
+    data class ValidationError(val msg: String) : Error()
+}
+
+fun validateTag(tag: String): ValidatedNel<Error.ValidationError, Tag> =
+    if (!Tag.values().any { it.name == tag }) {
+        Error.ValidationError("Tag is invalid").invalidNel()
+    }
+    else {
+        Tag.valueOf(tag).validNel()
+    }
+
+fun validateTitle(title: String): ValidatedNel<Error.ValidationError, Title> =
+    if (title.isBlank()) {
+        Error.ValidationError("Title cannot be blank").invalidNel()
+    }
+    else {
+        Title(title).validNel()
+    }
+
+fun validateAuthor(author: String): ValidatedNel<Error.ValidationError, Author> =
+    if (!author.matches("^[a-zA-Z]*$".toRegex())) {
+        Error.ValidationError("Author needs to be alphabet").invalidNel()
+    } else {
+        Author(author).validNel()
+    }
+
+fun main() {
+    val myMetadata = validateTag("TYPE_C").zip(
+        validateTitle("Functional Programming in Kotlin"),
+        validateAuthor("Joe")
+    ) { tag, title, author ->
+        CustomMetadata(tag, title, author)
+    }
+
+    println(myMetadata)
+    // Validated.Valid(CustomMetadata(
+    //  tag=TYPE_C, 
+    //  title=Title(value=Functional Programming in Kotlin), 
+    //  author=Author(value=Joe)
+    // ))
+
+    val strangeMetadata = validateTag("TYPE_Z").zip(
+        validateTitle(""),
+        validateAuthor("^_^")
+    ) { tag, title, author ->
+        CustomMetadata(tag, title, author)
+    }
+
+    println(strangeMetadata)
+    // Validated.Invalid(NonEmptyList(
+    //  ValidationError(msg=Tag is invalid),
+    //  ValidationError(msg=Title cannot be blank),
+    //  ValidationError(msg=Author needs to be alphabet)
+    // ))
+}
 ```
 
 --
 
 ### Validate Domain Model Creation
 
+➡️ Validate how we construct data
+
 ```kotlin=
-// Sample for validate when domain model create
+import arrow.core.*
+import other.model.Author
+import other.model.Tag
+import other.model.Title
+
+sealed class Error {
+    // ... //
+    data class ValidationError(val msg: String) : Error()
+}
+
+@JvmInline
+value class SimpleFileName private constructor(val value: String) {
+    companion object {
+        fun create(value: String): ValidatedNel<Error.ValidationError, SimpleFileName> = when {
+            !value.matches("^[a-zA-Z0-9_-]*\$".toRegex()) -> Error.ValidationError("FileName needs to be alphanumeric, underline, or hyphen").invalidNel()
+            value.isBlank() -> Error.ValidationError("FileName cannot be blank").invalidNel()
+            else -> Valid(SimpleFileName(value)) // SimpleFileName(value).validNel()
+        }
+    }
+}
+
+@JvmInline
+value class SimpleFileFormat private constructor(val value: String) {
+    companion object {
+        fun create(value: String): ValidatedNel<Error.ValidationError, SimpleFileFormat> = when {
+            !value.matches("^\\.[a-zA-Z]*\$".toRegex()) -> Error.ValidationError("FileFormat needs to be alphabet and start with dot").invalidNel()
+            value.isBlank() -> Error.ValidationError("FileFormat cannot be blank").invalidNel()
+            else -> Valid(SimpleFileFormat(value)) // SimpleFileFormat(value).validNel()
+        }
+    }
+}
+
+data class SimpleFile(
+    val name: SimpleFileName,
+    val fileFormat: SimpleFileFormat
+)
+
+fun main() {
+    val myFile = SimpleFileName.create("FP_note").zip(
+        SimpleFileFormat.create(".doc")
+    ) { fileName, fileFormat ->
+        SimpleFile(fileName, fileFormat)
+    }
+
+    println(myFile)
+    // Validated.Valid(SimpleFile(
+    //  name=SimpleFileName(value=FP_note), 
+    //  fileFormat=SimpleFileFormat(value=.doc)
+    // ))
+
+    val strangeFile = SimpleFileName.create("Hello.World!").zip(
+        SimpleFileFormat.create(".png") // only file format is valid
+    ) { fileName, fileFormat ->
+        SimpleFile(fileName, fileFormat)
+    }
+
+    println(strangeFile)
+    // Validated.Invalid(NonEmptyList(
+    //  ValidationError(msg=FileName needs to be alphanumeric, underline, or hyphen)
+    // ))
+}
 ```
 
 ---
@@ -532,7 +692,91 @@ Sometimes it would be nice to **have all of these errors** reported simultaneous
 ### Either & Validated
 
 ```kotlin=
-// sample for Either & Validated (用either.eager{}包起來，檢查表單欄位後送出)
+import arrow.core.*
+import arrow.core.computations.either
+import other.model.*
+
+data class RawMetadata(
+    val tag: String,
+    val title: String,
+    val author: String
+)
+
+sealed class Error {
+    object UploadFileError : Error()
+    object FileNotFound : Error()
+    object UpdateMetadataError : Error()
+    data class ValidationError(val msg: String) : Error()
+    data class InvalidMetadataError(val nel: List<ValidationError>) : Error()
+}
+
+fun ValidatedNel<Error.ValidationError, CustomMetadata>.toDomainError(): Validated<Error.InvalidMetadataError, CustomMetadata> =
+    mapLeft { Error.InvalidMetadataError(it) }
+
+fun validateTag(tag: String): ValidatedNel<Error.ValidationError, Tag> =
+    if (!Tag.values().any { it.name == tag }) {
+        Error.ValidationError("Tag is invalid").invalidNel()
+    } else {
+        Tag.valueOf(tag).validNel()
+    }
+
+fun validateTitle(title: String): ValidatedNel<Error.ValidationError, Title> =
+    if (title.isBlank()) {
+        Error.ValidationError("Title cannot be blank").invalidNel()
+    } else {
+        Title(title).validNel()
+    }
+
+fun validateAuthor(author: String): ValidatedNel<Error.ValidationError, Author> =
+    if (!author.matches("^[a-zA-Z]*$".toRegex())) {
+        Error.ValidationError("Author needs to be alphabet").invalidNel()
+    } else {
+        Author(author).validNel()
+    }
+
+fun validateMetadata(tag: String, title: String, author: String): ValidatedNel<Error.ValidationError, CustomMetadata> =
+    validateTag(tag).zip(
+        validateTitle(title),
+        validateAuthor(author)
+    ) { tag, title, author ->
+        CustomMetadata(tag, title, author)
+    }
+
+fun downloadFile(fileName: FileName): Either<Error.FileNotFound, CustomFile> =
+    CustomFile(
+        header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Note A"), Author("Joe"))),
+        content = Content("Note A Content"),
+        fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(".doc")),
+        name = FileName("Note_A")
+    ).right()
+
+fun updateMetadata(file: CustomFile, newMetadata: CustomMetadata): Either<Error.UpdateMetadataError, CustomFile> =
+    CustomFile.header.metadata.set(file, newMetadata).right()
+
+fun uploadFile(file: CustomFile): Either<Error.UploadFileError, CustomFile> =
+    file.right()
+
+fun updateCloudMetadata(targetFileName: FileName, newRawMetadata: RawMetadata): Either<Error, CustomMetadata> =
+    either.eager {
+        val downloadedFile = downloadFile(targetFileName).bind()
+        val validMetadata = validateMetadata(newRawMetadata.tag, newRawMetadata.title, newRawMetadata.author).toDomainError().bind()
+        val updatedMetadataFile = updateMetadata(downloadedFile, validMetadata).bind()
+        val uploadedFile = uploadFile(updatedMetadataFile).bind()
+        uploadedFile.header.metadata
+    }
+
+fun main() {
+    val fileName = FileName("Note_A")
+    val newRawMetadata = RawMetadata("TYPE_A", "Functional Programming in Kotlin", "Joe")
+    val updatedFileMetadata = updateCloudMetadata(fileName, newRawMetadata)
+
+    println(updatedFileMetadata) // Either.Right(CustomMetadata(tag=TYPE_A, title=Title(value=Functional Programming in Kotlin), author=Author(value=Joe)))
+
+    val strangeRawMetadata = RawMetadata("TYPE_Z", "Functional Programming in Kotlin", "Joe")
+    val strangeFileMetadata = updateCloudMetadata(fileName, strangeRawMetadata)
+
+    println(strangeFileMetadata) // Either.Left(InvalidMetadataError(nel=NonEmptyList(ValidationError(msg=Tag is invalid))))
+}
 ```
 
 ---
