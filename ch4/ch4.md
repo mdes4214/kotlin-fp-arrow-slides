@@ -610,7 +610,7 @@ fun main() {
 
 --
 
-### Validate Domain Model Creation
+#### Validate Domain Model Creation
 
 ➡️ Validate how we construct data
 
@@ -734,10 +734,10 @@ fun validateAuthor(author: String): ValidatedNel<Error.ValidationError, Author> 
         Author(author).validNel()
     }
 
-fun validateMetadata(tag: String, title: String, author: String): ValidatedNel<Error.ValidationError, CustomMetadata> =
-    validateTag(tag).zip(
-        validateTitle(title),
-        validateAuthor(author)
+fun validateMetadata(rawTag: String, rawTitle: String, rawAuthor: String): ValidatedNel<Error.ValidationError, CustomMetadata> =
+    validateTag(rawTag).zip(
+        validateTitle(rawTitle),
+        validateAuthor(rawAuthor)
     ) { tag, title, author ->
         CustomMetadata(tag, title, author)
     }
@@ -787,6 +787,39 @@ fun main() {
 	- if value `A` is present ➡️ `Some<A>`
 	- if value is absent ➡️ `None`
 
+```kotlin=
+sealed class Option<out A> {
+  // ... map, flatMap, fold...
+}
+
+data class Some<out A> : Option<A>
+fun <A> none() : Option<A> { /* ... */ }
+```
+
+--
+
+➡️ `fold`
+
+```kotlin=
+import arrow.core.Option
+import arrow.core.Some
+import arrow.core.none
+
+fun evalOption(option: Option<String>): String =
+    option.fold(
+        ifEmpty = { "No value" },
+        ifSome =  { it }
+    )
+
+fun main() {
+    val someValue: Option<String> = Some("This is Some value.")
+    println(evalOption(someValue)) // This is Some value.
+
+    val noneValue: Option<String> = none()
+    println(evalOption(noneValue)) // No value
+}
+```
+
 --
 
 ### Option
@@ -796,26 +829,187 @@ fun main() {
 
 --
 
-As a FP idiom and to support some use cases (RxJava) 
+- For **testability**, **exhaustivity**
+- As a **FP languages idiom**
 
 ➡️ use `Option`
 
+<font size="5">🔍 Also to support *some use cases* - Cannot pass `null` value to an `Observable` in RxJava </font>
+
 --
 
-`fromNullable` and `A?.let {}`
+### Convert from nullable variable
+
+➡️ `Option.fromNullable()`
 
 ```kotlin=
-// sample for Option, Either<Unit, A>, A? (A?.let 模擬flatMap)
+import arrow.core.Option
+
+fun evalOption(option: Option<String>): String =
+    option.fold(
+        ifEmpty = { "No value" },
+        ifSome =  { it }
+    )
+
+fun main() {
+    val helloStr: String? = "Hello!"
+    val optionHelloStr = Option.fromNullable(helloStr)
+    println(evalOption(optionHelloStr)) // Hello!
+
+    val nullStr: String? = null
+    val optionNullStr = Option.fromNullable(nullStr)
+    println(evalOption(optionNullStr)) // No value
+}
+```
+
+--
+
+### Either & Validated & Option
+
+```kotlin=
+import arrow.core.*
+import arrow.core.computations.either
+import other.model.*
+
+data class RawMetadata(
+    val tag: String,
+    val title: String,
+    val author: String
+)
+
+sealed class Error {
+    object UploadFileError : Error()
+    object FileNotFound : Error()
+    object FileNotFoundByAuthor : Error()
+    object UpdateMetadataError : Error()
+    data class ValidationError(val msg: String) : Error()
+    data class InvalidMetadataError(val nel: List<ValidationError>) : Error()
+}
+
+fun ValidatedNel<Error.ValidationError, CustomMetadata>.toDomainError(): Validated<Error.InvalidMetadataError, CustomMetadata> =
+    mapLeft { Error.InvalidMetadataError(it) }
+
+fun validateTag(tag: String): ValidatedNel<Error.ValidationError, Tag> =
+    if (!Tag.values().any { it.name == tag }) {
+        Error.ValidationError("Tag is invalid").invalidNel()
+    } else {
+        Tag.valueOf(tag).validNel()
+    }
+
+fun validateTitle(title: String): ValidatedNel<Error.ValidationError, Title> =
+    if (title.isBlank()) {
+        Error.ValidationError("Title cannot be blank").invalidNel()
+    } else {
+        Title(title).validNel()
+    }
+
+fun validateAuthor(author: String): ValidatedNel<Error.ValidationError, Author> =
+    if (!author.matches("^[a-zA-Z]*$".toRegex())) {
+        Error.ValidationError("Author needs to be alphabet").invalidNel()
+    } else {
+        Author(author).validNel()
+    }
+
+fun validateMetadata(rawTag: String, rawTitle: String, rawAuthor: String): ValidatedNel<Error.ValidationError, CustomMetadata> =
+    validateTag(rawTag).zip(
+        validateTitle(rawTitle),
+        validateAuthor(rawAuthor)
+    ) { tag, title, author ->
+        CustomMetadata(tag, title, author)
+    }
+
+fun downloadFile(fileName: FileName): Either<Error.FileNotFound, CustomFile> =
+    CustomFile(
+        header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Note A"), Author("Joe"))),
+        content = Content("Note A Content"),
+        fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(".doc")),
+        name = FileName("Note_A")
+    ).right()
+
+fun updateMetadata(file: CustomFile, newMetadata: CustomMetadata): Either<Error.UpdateMetadataError, CustomFile> =
+    CustomFile.header.metadata.set(file, newMetadata).right()
+
+fun uploadFile(file: CustomFile): Either<Error.UploadFileError, CustomFile> =
+    file.right()
+
+fun findFileByAuthor(files: CustomFiles, author: Author): Option<CustomFile> =
+    Option.fromNullable(files.customFiles.find { it.header.metadata.author == author })
+
+fun updateCloudMetadataByAuthor(
+    files: CustomFiles,
+    author: Author,
+    newRawMetadata: RawMetadata
+): Either<Error, CustomMetadata> =
+    either.eager {
+        val foundFileName = findFileByAuthor(files, author).toEither(
+            ifEmpty = { Error.FileNotFoundByAuthor }
+        ).map {
+            it.name
+        }.bind()
+        val downloadedFile = downloadFile(foundFileName).bind()
+        val validMetadata =
+            validateMetadata(newRawMetadata.tag, newRawMetadata.title, newRawMetadata.author).toDomainError().bind()
+        val updatedMetadataFile = updateMetadata(downloadedFile, validMetadata).bind()
+        val uploadedFile = uploadFile(updatedMetadataFile).bind()
+        uploadedFile.header.metadata
+    }
+
+fun main() {
+    val customFiles = CustomFiles(
+        listOf(
+            CustomFile(
+                header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Note A"), Author("Joe"))),
+                content = Content("Note A Content"),
+                fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(".doc")),
+                name = FileName("Note_A")
+            ),
+            CustomFile(
+                header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Photo A"), Author("Sam"))),
+                content = Content("(Binary Encoded)"),
+                fileFormat = CustomFileFormat.MediaFile.ImageFile(ImageFileExtension(".jpg")),
+                name = FileName("Photo_A")
+            ),
+            CustomFile(
+                header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Video A"), Author("Mark"))),
+                content = Content("(Binary Encoded)"),
+                fileFormat = CustomFileFormat.MediaFile.VideoFile(VideoFileExtension(".mp4"), BitRateKBitPerS(700)),
+                name = FileName("Video_A")
+            ),
+            CustomFile(
+                header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Audio A"), Author("Tom"))),
+                content = Content("(Binary Encoded)"),
+                fileFormat = CustomFileFormat.MediaFile.AudioFile(AudioFileExtension(".mp3"), BitRateKBitPerS(128)),
+                name = FileName("Audio_A")
+            )
+        )
+    )
+    val targetAuthor = Author("Joe")
+
+    val newRawMetadata = RawMetadata("TYPE_A", "Functional Programming in Kotlin", "Joe")
+    val updatedFileMetadata = updateCloudMetadataByAuthor(customFiles, targetAuthor, newRawMetadata)
+
+    println(updatedFileMetadata) // Either.Right(CustomMetadata(tag=TYPE_A, title=Title(value=Functional Programming in Kotlin), author=Author(value=Joe)))
+
+    val strangeRawMetadata = RawMetadata("TYPE_Z", "Functional Programming in Kotlin", "Joe")
+    val strangeFileMetadata = updateCloudMetadataByAuthor(customFiles, targetAuthor, strangeRawMetadata)
+
+    println(strangeFileMetadata) // Either.Left(InvalidMetadataError(nel=NonEmptyList(ValidationError(msg=Tag is invalid))))
+}
 ```
 
 ---
 
 ### Flatten Iterable Collection
 
-- Flatten **iterable** collection to make it easier to work with
-	- `Array<T>` doesn't implement `Iterable<T>`
+- Flatten `Iterable` to make it *easier to work with*
+
+➡️ **Monad**
+
+<font size="6">⚠️ `Array<T>` doesn't implement `Iterable<T>`</font>
 
 --
+
+### Traverse
 
 - `List<Either<E, A>>`
   - ➡️ `Either<E, List<A>>`
@@ -826,11 +1020,207 @@ As a FP idiom and to support some use cases (RxJava)
 
 --
 
-- `sequence` ➡️ simply flatten
 - `traverse` ➡️ flatten after *operation*
+- `sequence` ➡️ reverse a flat to List
+  - <font size="6">e.g. `Either<E, List<A>>` ➡️ `List<Either<E, A>>`</font>
+  - <font size="6">the Failure Path will be converted to **empty List**</font>
+
+🔍 Note that the `sequence` has *different semantics* from `parSequence` in [Arrow Fx](https://arrow-kt.io/docs/apidocs/arrow-fx-coroutines/arrow.fx.coroutines/par-sequence.html)
+
+--
 
 ```kotlin=
-// sample for Flatten iterable (用either.eager{}串起這些flatten後的)
+import arrow.core.*
+
+sealed class Error {
+    object NonPositiveInteger : Error()
+}
+
+fun squarePositiveInteger(num: Int): Either<Error, Int> =
+    if (num > 0) {
+        (num * num).right()
+    } else {
+        Error.NonPositiveInteger.left()
+    }
+
+fun main() {
+    val someValues: List<Option<Int>> = listOf(Some(1), Some(2), Some(3))
+    println(someValues) // [Option.Some(1), Option.Some(2), Option.Some(3)]
+    val flatSomeValues = someValues.traverseOption { it } // someValues.traverseOption(::identity)
+    println(flatSomeValues) // Option.Some([1, 2, 3])
+
+    val nums = listOf(1, 2, 3)
+    val squareNums = nums.map { squarePositiveInteger(it) }
+    println(squareNums) // [Either.Right(1), Either.Right(4), Either.Right(9)]
+    val flatSquareNums = nums.traverseEither { squarePositiveInteger(it) }
+    println(flatSquareNums) // Either.Right([1, 4, 9])
+    println(flatSquareNums.sequence()) // [Either.Right(1), Either.Right(4), Either.Right(9)]
+
+
+    val numsWithNegative = listOf(1, 2, -5, 3)
+    val flatSquareNumsWithNegative = numsWithNegative.traverseEither { squarePositiveInteger(it) }
+    println(flatSquareNumsWithNegative) // Either.Left(playground.Error$NonPositiveInteger@735b478)
+    println(flatSquareNumsWithNegative.sequence()) // []
+}
+```
+
+--
+
+#### Either & Validated & Option & Traverse
+
+```kotlin=
+import arrow.core.*
+import arrow.core.computations.either
+import other.model.*
+
+data class RawMetadata(
+    val tag: String,
+    val title: String,
+    val author: String
+)
+
+sealed class Error {
+    object UploadFileError : Error()
+    object FileNotFound : Error()
+    object FileNotFoundByAuthor : Error()
+    object UpdateMetadataError : Error()
+    data class ValidationError(val msg: String) : Error()
+    data class InvalidMetadataError(val nel: List<ValidationError>) : Error()
+}
+
+fun ValidatedNel<Error.ValidationError, CustomMetadata>.toDomainError(): Validated<Error.InvalidMetadataError, CustomMetadata> =
+    mapLeft { Error.InvalidMetadataError(it) }
+
+fun validateTag(tag: String): ValidatedNel<Error.ValidationError, Tag> =
+    if (!Tag.values().any { it.name == tag }) {
+        Error.ValidationError("Tag is invalid").invalidNel()
+    } else {
+        Tag.valueOf(tag).validNel()
+    }
+
+fun validateTitle(title: String): ValidatedNel<Error.ValidationError, Title> =
+    if (title.isBlank()) {
+        Error.ValidationError("Title cannot be blank").invalidNel()
+    } else {
+        Title(title).validNel()
+    }
+
+fun validateAuthor(author: String): ValidatedNel<Error.ValidationError, Author> =
+    if (!author.matches("^[a-zA-Z]*$".toRegex())) {
+        Error.ValidationError("Author needs to be alphabet").invalidNel()
+    } else {
+        Author(author).validNel()
+    }
+
+fun validateMetadata(
+    rawTag: String,
+    rawTitle: String,
+    rawAuthor: String
+): ValidatedNel<Error.ValidationError, CustomMetadata> =
+    validateTag(rawTag).zip(
+        validateTitle(rawTitle),
+        validateAuthor(rawAuthor)
+    ) { tag, title, author ->
+        CustomMetadata(tag, title, author)
+    }
+
+fun downloadFiles(fileNames: List<FileName>): Either<Error.FileNotFound, List<CustomFile>> =
+    listOf(
+        CustomFile(
+            header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Note A"), Author("Joe"))),
+            content = Content("Note A Content"),
+            fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(".doc")),
+            name = FileName("Note_A")
+        ),
+        CustomFile(
+            header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Video A"), Author("Mark"))),
+            content = Content("(Binary Encoded)"),
+            fileFormat = CustomFileFormat.MediaFile.VideoFile(VideoFileExtension(".mp4"), BitRateKBitPerS(700)),
+            name = FileName("Video_A")
+        )
+    ).right()
+
+fun updateMetadata(
+    files: List<CustomFile>,
+    newMetadata: CustomMetadata
+): Either<Error.UpdateMetadataError, List<CustomFile>> =
+    files.traverseEither { file ->
+        CustomFile.header.metadata.set(file, newMetadata).right()
+    }
+
+fun uploadFiles(files: List<CustomFile>): Either<Error.UploadFileError, List<CustomFile>> =
+    files.traverseEither { it.right() } // due to traverse with ::identity, this line equals to `files.right()`
+
+fun findFilesByAuthors(files: CustomFiles, authors: List<Author>): Option<List<CustomFile>> =
+    authors.traverseOption { author ->
+        Option.fromNullable(files.customFiles.find { it.header.metadata.author == author })
+    }
+
+fun updateCloudMetadataByAuthors(
+    files: CustomFiles,
+    authors: List<Author>,
+    newRawMetadata: RawMetadata
+): Either<Error, List<CustomFile>> =
+    either.eager {
+        val foundFileNames = findFilesByAuthors(files, authors).toEither(
+            ifEmpty = { Error.FileNotFoundByAuthor }
+        ).map { files ->
+            files.map {
+                it.name
+            }
+        }.bind()
+        val downloadedFiles = downloadFiles(foundFileNames).bind()
+        val validMetadata =
+            validateMetadata(newRawMetadata.tag, newRawMetadata.title, newRawMetadata.author).toDomainError().bind()
+        val updatedMetadataFiles = updateMetadata(downloadedFiles, validMetadata).bind()
+        val uploadedFiles = uploadFiles(updatedMetadataFiles).bind()
+        uploadedFiles
+    }
+
+fun main() {
+    val customFiles = CustomFiles(
+        listOf(
+            CustomFile(
+                header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Note A"), Author("Joe"))),
+                content = Content("Note A Content"),
+                fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(".doc")),
+                name = FileName("Note_A")
+            ),
+            CustomFile(
+                header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Photo A"), Author("Sam"))),
+                content = Content("(Binary Encoded)"),
+                fileFormat = CustomFileFormat.MediaFile.ImageFile(ImageFileExtension(".jpg")),
+                name = FileName("Photo_A")
+            ),
+            CustomFile(
+                header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Video A"), Author("Mark"))),
+                content = Content("(Binary Encoded)"),
+                fileFormat = CustomFileFormat.MediaFile.VideoFile(VideoFileExtension(".mp4"), BitRateKBitPerS(700)),
+                name = FileName("Video_A")
+            ),
+            CustomFile(
+                header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Audio A"), Author("Tom"))),
+                content = Content("(Binary Encoded)"),
+                fileFormat = CustomFileFormat.MediaFile.AudioFile(AudioFileExtension(".mp3"), BitRateKBitPerS(128)),
+                name = FileName("Audio_A")
+            )
+        )
+    )
+    val targetAuthors = listOf(Author("Joe"), Author("Mark"))
+
+    val newRawMetadata = RawMetadata("TYPE_A", "Functional Programming in Kotlin", "Joe")
+    val updatedFiles = updateCloudMetadataByAuthors(customFiles, targetAuthors, newRawMetadata)
+    println(updatedFiles)
+    // Either.Right([
+    //  CustomFile(header=CustomHeader(metadata=CustomMetadata(tag=TYPE_A, title=Title(value=Functional Programming in Kotlin), author=Author(value=Joe))), content=Content(value=Note A Content), fileFormat=DocumentFile(extension=DocumentFileExtension(value=.doc)), name=FileName(value=Note_A)), 
+    //  CustomFile(header=CustomHeader(metadata=CustomMetadata(tag=TYPE_A, title=Title(value=Functional Programming in Kotlin), author=Author(value=Joe))), content=Content(value=(Binary Encoded)), fileFormat=VideoFile(extension=VideoFileExtension(value=.mp4), bitRateKBitPerS=BitRateKBitPerS(value=700)), name=FileName(value=Video_A))
+    // ])
+
+    val strangeRawMetadata = RawMetadata("TYPE_Z", "Functional Programming in Kotlin", "Joe")
+    val strangeFiles = updateCloudMetadataByAuthors(customFiles, targetAuthors, strangeRawMetadata)
+    println(strangeFiles)
+    // Either.Left(InvalidMetadataError(nel=NonEmptyList(ValidationError(msg=Tag is invalid))))
+}
 ```
 
 ---
@@ -855,8 +1245,16 @@ As a FP idiom and to support some use cases (RxJava)
 	- Accumulate invalid cases ➡️ `zip`	
 - `Option<A>`
 	- Absent optional value ➡️ `Some<A>`, `None`
-	- `fromNullable` and `A?.let {}`
-- Flatten
-  - `sequence`, `traverse`
-  - `Iterable<Either<E, A>>`
-    - ➡️ `Either<E, Iterable<A>>`
+	- `Option.fromNullable()`
+
+--
+
+### Recap #3
+
+- Flatten Iterable
+  - `traverse`
+    - `Iterable<Either<E, A>>`
+      - ➡️ `Either<E, Iterable<A>>`
+  - `sequence`
+    - `Either<E, Iterable<A>>`
+      - ➡️ `List<Either<E, A>>`
