@@ -747,7 +747,7 @@ fun main() {
 - Immutability
 	- Deep copy in nested `data class`
 	- NO copy method for `sealed class`
-- `@Optics`
+- `@optics`
   - Solved above problems
   - DSL for highly *composable* and *reusable*
   - **Generated at compile time**
@@ -757,7 +757,7 @@ fun main() {
 ### Recap #2
 
 - Lens, Prism ➡️ compose to Optional
-- Traversl, Every ➡️ for collections
+- Traversal, Every ➡️ for collections
 - Iso ➡️ isomorphism between `data class` and `TupleN`
 
 
