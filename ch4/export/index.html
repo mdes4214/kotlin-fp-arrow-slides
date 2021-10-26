@@ -635,7 +635,94 @@ fun main() {
             </section>
         
             <section >
-                <h3><a id="user-content-flatmap-1" class="anchor" href="#flatmap-1" aria-hidden="true"></a>flatMap</h3>
+                <h4><a id="user-content-more-clearly-understanding-about" class="anchor" href="#more-clearly-understanding-about" aria-hidden="true"></a>More Clearly Understanding about</h4>
+<h3><a id="user-content-functor--monad" class="anchor" href="#functor--monad" aria-hidden="true"></a>Functor &amp; Monad</h3>
+<ul>
+<li><a href="https://juejin.cn/post/6844903748184080398">https://juejin.cn/post/6844903748184080398</a></li>
+<li><a href="https://juejin.cn/post/6844903762780225544">https://juejin.cn/post/6844903762780225544</a></li>
+<li><a href="https://stackoverflow.com/questions/45252709/what-is-the-difference-between-a-functor-and-a-monad">https://stackoverflow.com/questions/45252709/what-is-the-difference-between-a-functor-and-a-monad</a></li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h4><a id="user-content-functor--monad-1" class="anchor" href="#functor--monad-1" aria-hidden="true"></a>Functor &amp; Monad</h4>
+<h3><a id="user-content-map--flatmap" class="anchor" href="#map--flatmap" aria-hidden="true"></a>map &amp; flatMap</h3>
+<pre><code class="language-kotlin=">import arrow.core.Either
+import arrow.core.flatMap
+import arrow.core.right
+
+fun main() {
+    val wrappedNum = 2.right()
+
+    val doubleMe: (Int) -&gt; Int = { it * 2 }
+    println(wrappedNum.map(doubleMe)) // Either.Right(4)
+    // Note for `map`:
+    //  1. def: (A -&gt; B) -&gt; (F[A]) -&gt; F[B]
+    //  2. a Functor which applies a function to a wrapped value
+
+    val doubleMeEither: (Int) -&gt; Either&lt;Error, Int&gt; = { (it * 2).right() }
+    println(wrappedNum.map(doubleMeEither)) // Either.Right(Either.Right(4))
+    println(wrappedNum.flatMap(doubleMeEither)) // Either.Right(4)
+    // Note for `flatMap`:
+    //  1. def: (A -&gt; M[B]) -&gt; (M[A]) -&gt; M[B]
+    //  2. a Monad which flattens the `map` result
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p><font size="6">🤔 What will happen if we replace the <code>flatMap</code> to <code>map</code> ?</font></p>
+<pre><code class="language-kotlin=">import arrow.core.Either
+import arrow.core.flatMap
+import arrow.core.right
+import other.model.*
+
+sealed class Error {
+    object UploadFileError : Error()
+    object FileNotFound : Error()
+    object InvalidTag : Error()
+}
+
+fun downloadFile(fileName: FileName): Either&lt;Error.FileNotFound, CustomFile&gt; =
+    CustomFile(
+        header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title(&quot;Note A&quot;), Author(&quot;Joe&quot;))),
+        content = Content(&quot;Note A Content&quot;),
+        fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(&quot;.doc&quot;)),
+        name = FileName(&quot;Note_A&quot;)
+    ).right()
+
+fun updateTag(file: CustomFile, newTag: Tag): Either&lt;Error.InvalidTag, CustomFile&gt; =
+    CustomFile.header.metadata.tag.set(file, newTag).right()
+
+fun uploadFile(file: CustomFile): Either&lt;Error.UploadFileError, CustomFile&gt; =
+    file.right()
+
+fun main() {
+    val fileName = FileName(&quot;Note_A&quot;)
+    val newTag = Tag.TYPE_A
+    val updatedFileTag = downloadFile(fileName)
+        .flatMap { customFile -&gt; updateTag(customFile, newTag) }
+        .flatMap { customFile -&gt; uploadFile(customFile) }
+        .map { customFile -&gt; customFile.header.metadata.tag }
+
+    println(updatedFileTag) // Either.Right(TYPE_A)
+}
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-flatmap-1" class="anchor" href="#flatmap-1" aria-hidden="true"></a>flatMap</h3>
 <ul>
 <li>Compute over the happy case ➡️ Happy Path</li>
 <li>Short circuit on error ➡️ Failure Path</li>

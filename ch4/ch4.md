@@ -314,6 +314,85 @@ fun main() {
 
 --
 
+#### More Clearly Understanding about
+### Functor & Monad
+
+- https://juejin.cn/post/6844903748184080398
+- https://juejin.cn/post/6844903762780225544
+- https://stackoverflow.com/questions/45252709/what-is-the-difference-between-a-functor-and-a-monad
+
+--
+
+#### Functor & Monad
+### map & flatMap
+
+```kotlin=
+import arrow.core.Either
+import arrow.core.flatMap
+import arrow.core.right
+
+fun main() {
+    val wrappedNum = 2.right()
+
+    val doubleMe: (Int) -> Int = { it * 2 }
+    println(wrappedNum.map(doubleMe)) // Either.Right(4)
+    // Note for `map`:
+    //  1. def: (A -> B) -> (F[A]) -> F[B]
+    //  2. a Functor which applies a function to a wrapped value
+
+    val doubleMeEither: (Int) -> Either<Error, Int> = { (it * 2).right() }
+    println(wrappedNum.map(doubleMeEither)) // Either.Right(Either.Right(4))
+    println(wrappedNum.flatMap(doubleMeEither)) // Either.Right(4)
+    // Note for `flatMap`:
+    //  1. def: (A -> M[B]) -> (M[A]) -> M[B]
+    //  2. a Monad which flattens the `map` result
+}
+```
+
+--
+
+<font size="6">🤔 What will happen if we replace the `flatMap` to `map` ?</font>
+
+```kotlin=
+import arrow.core.Either
+import arrow.core.flatMap
+import arrow.core.right
+import other.model.*
+
+sealed class Error {
+    object UploadFileError : Error()
+    object FileNotFound : Error()
+    object InvalidTag : Error()
+}
+
+fun downloadFile(fileName: FileName): Either<Error.FileNotFound, CustomFile> =
+    CustomFile(
+        header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Note A"), Author("Joe"))),
+        content = Content("Note A Content"),
+        fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(".doc")),
+        name = FileName("Note_A")
+    ).right()
+
+fun updateTag(file: CustomFile, newTag: Tag): Either<Error.InvalidTag, CustomFile> =
+    CustomFile.header.metadata.tag.set(file, newTag).right()
+
+fun uploadFile(file: CustomFile): Either<Error.UploadFileError, CustomFile> =
+    file.right()
+
+fun main() {
+    val fileName = FileName("Note_A")
+    val newTag = Tag.TYPE_A
+    val updatedFileTag = downloadFile(fileName)
+        .flatMap { customFile -> updateTag(customFile, newTag) }
+        .flatMap { customFile -> uploadFile(customFile) }
+        .map { customFile -> customFile.header.metadata.tag }
+
+    println(updatedFileTag) // Either.Right(TYPE_A)
+}
+```
+
+---
+
 ### flatMap
 
 - Compute over the happy case ➡️ Happy Path
