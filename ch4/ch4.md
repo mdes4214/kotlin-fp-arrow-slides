@@ -455,7 +455,7 @@ suspend fun main() {
 
 Sometimes it would be nice to **have all of these errors** reported simultaneously.
 
-➡️ e.g. validate the input form
+➡️ e.g., validate the input form
 
 --
 
@@ -1022,7 +1022,7 @@ fun main() {
 
 - `traverse` ➡️ flatten after *operation*
 - `sequence` ➡️ reverse a flat to List
-  - <font size="6">e.g. `Either<E, List<A>>` ➡️ `List<Either<E, A>>`</font>
+  - <font size="6">e.g., `Either<E, List<A>>` ➡️ `List<Either<E, A>>`</font>
   - <font size="6">the Failure Path will be converted to **empty List**</font>
 
 🔍 Note that the `sequence` has *different semantics* from `parSequence` in [Arrow Fx](https://arrow-kt.io/docs/apidocs/arrow-fx-coroutines/arrow.fx.coroutines/par-sequence.html)
