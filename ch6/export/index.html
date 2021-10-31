@@ -384,21 +384,20 @@ p {
 <ul>
 <li>Arrow-kt
 <ul>
-<li><code>Atomic</code></li>
+<li><code>Atomic&lt;A&gt;</code> ➡️ Concurrent safe Reference</li>
 </ul>
 </li>
 <li>Kotlinx
 <ul>
 <li><code>Mutex</code> ➡️ Mutual exclusion for coroutines</li>
 <li><code>Semaphore</code> ➡️ Counting semaphore for coroutines</li>
-<li><code>Channel</code> ➡️ Communication between a sender and a receiver
+<li><code>Channel</code> ➡️ Communication between coroutines
 <ul>
 <li><font size="6">similar to <code>BlockingQueue</code> in Java, but with <strong>suspending</strong> operations</font></li>
 </ul>
 </li>
 </ul>
 </li>
-<li>etc.</li>
 </ul>
 
             </section>
@@ -407,9 +406,41 @@ p {
                 <h3><a id="user-content-atomic" class="anchor" href="#atomic" aria-hidden="true"></a>Atomic</h3>
 <ul>
 <li>provided by <a href="https://arrow-kt.io/docs/apidocs/arrow-fx-coroutines/arrow.fx.coroutines/-atomic/">Arrow-kt</a></li>
-<li>A wrapper around Kotlinx <code>AtomicFU</code></li>
+<li>In other languages also known as <code>Ref</code>, <code>IORef</code>
+<ul>
+<li>➡️ <code>suspend</code></li>
 </ul>
-<pre><code class="language-kotlin=">// sample for atomic
+</li>
+<li>A wrapper around Kotlinx <a href="https://github.com/Kotlin/kotlinx.atomicfu"><code>AtomicFU</code></a></li>
+</ul>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">suspend fun main() {
+    val num = Atomic(15)
+
+    println(num.access()) // Obtains a snapshot of the current value, and a setter for updating it
+    val numSetter = num.access().second
+    numSetter(20)
+    println(num.get()) // 20
+    num.set(15)
+
+    println(num.get()) // 15
+    println(num.getAndUpdate { it * 2 }) // 15, then update `num` to 15 * 2
+    println(num.get()) // 30
+    num.update { it * 2 }
+    println(num.get()) // 60
+
+    // Create an AtomicRef
+    val numLens = num.lens(
+        get = { it + 2 },
+        set = { _, newValue -&gt; newValue + 3 }
+    )
+    println(numLens.get()) // 60 + 2 = 62
+    numLens.set(15) // 15 + 3 = 18
+    println(numLens.get()) // 18 + 2 = 20
+}
 </code></pre>
 
             </section>
@@ -449,7 +480,24 @@ p {
             </section>
         
             <section >
-                <pre><code class="language-kotlin=">// sample for try/catch/finally with CancellationException, NonCancellable
+                <pre><code class="language-kotlin=">import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import other.model.SuspendFile
+
+suspend fun main() {
+    // file open, readContent, and close are suspended ops
+    val file = withContext(NonCancellable) { // acquire need to be NonCancellable
+        SuspendFile(&quot;FP_note.txt&quot;).open()
+    }
+    try {
+        println(file.readContent())
+    } catch (e: CancellationException) { // catch also CancellationException
+        withContext(NonCancellable) { file.close() } // release need to be NonCancellable
+    } catch (t: Throwable) {
+        withContext(NonCancellable) { file.close() } // release need to be NonCancellable
+    }
+}
 </code></pre>
 
             </section>
@@ -509,17 +557,31 @@ p {
     
     <section>
         <section >
-            <h3><a id="user-content-bracket" class="anchor" href="#bracket" aria-hidden="true"></a>bracket</h3>
+            <h3><a id="user-content-bracket" class="anchor" href="#bracket" aria-hidden="true"></a><a href="https://arrow-kt.io/docs/apidocs/arrow-fx-coroutines/arrow.fx.coroutines/bracket.html">bracket</a></h3>
 <p>Declare <code>acquire</code>, <code>use</code>, and <code>release</code></p>
-<pre><code class="language-kotlin=">// sample for bracket definition
+<pre><code class="language-kotlin=">suspend fun &lt;A, B&gt; bracket(
+  acquire: suspend () -&gt; A,
+  use: suspend (A) -&gt; B,
+  release: suspend (A) -&gt; Unit
+): B
 </code></pre>
 
             </section>
         
             <section >
-                <h3><a id="user-content-bracketcase" class="anchor" href="#bracketcase" aria-hidden="true"></a>bracketCase</h3>
-<p>Same as <code>bracket</code>, but <code>release</code> by case</p>
-<pre><code class="language-kotlin=">// sample for bracketCase definition
+                <h3><a id="user-content-bracketcase" class="anchor" href="#bracketcase" aria-hidden="true"></a><a href="https://arrow-kt.io/docs/apidocs/arrow-fx-coroutines/arrow.fx.coroutines/bracket-case.html">bracketCase</a></h3>
+<p>Same as <code>bracket</code>, but <code>release</code> by <a href="https://arrow-kt.io/docs/apidocs/arrow-fx-coroutines/arrow.fx.coroutines/-exit-case/index.html"><code>ExitCase</code></a></p>
+<pre><code class="language-kotlin=">sealed ExitCase {
+  object Completed: ExitCase()
+  data class Cancelled(val exception: CancellationException) : ExitCase()
+  data class Failure(val failure: Throwable) : ExitCase()
+}
+
+suspend fun &lt;A, B&gt; bracketCase(
+  acquire: suspend () -&gt; A, 
+  use: suspend (A) -&gt; B, 
+  release: suspend (A, ExitCase) -&gt; Unit
+): B
 </code></pre>
 
             </section>
@@ -538,7 +600,29 @@ p {
             </section>
         
             <section >
-                <pre><code class="language-kotlin=">// sample for bracketCase error handling
+                <pre><code class="language-kotlin=">import arrow.core.Either
+import arrow.fx.coroutines.ExitCase
+import arrow.fx.coroutines.bracketCase
+import other.model.SuspendFile
+
+suspend fun main() {
+    val result = Either.catch {
+        bracketCase(
+            acquire = { SuspendFile(&quot;FP_note.txt&quot;).open() },
+            use = { throw RuntimeException(&quot;Boom!&quot;) },
+            release = { file, exitCase -&gt;
+                when(exitCase) {
+                    is ExitCase.Completed -&gt; { println(&quot;Release with Completed&quot;) }
+                    is ExitCase.Cancelled -&gt; { println(&quot;Release with Cancelled&quot;) }
+                    is ExitCase.Failure -&gt; { println(&quot;Release with Failure&quot;) } // will run
+                }
+                file.close()
+            }
+        )
+    }
+
+    println(result) // Either.Left(java.lang.RuntimeException: Boom!)
+}
 </code></pre>
 
             </section>
@@ -546,13 +630,43 @@ p {
             <section >
                 <h3><a id="user-content-cancellation-handling" class="anchor" href="#cancellation-handling" aria-hidden="true"></a>Cancellation Handling</h3>
 <p>Release when the coroutine is cancelled</p>
-<pre><code class="language-kotlin=">// sample for bracketCase Cancellation handling
+<pre><code class="language-kotlin=">import arrow.fx.coroutines.ExitCase
+import arrow.fx.coroutines.bracketCase
+import arrow.fx.coroutines.never
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import other.model.SuspendFile
+
+suspend fun main() {
+    coroutineScope {
+        val job = async {
+            bracketCase(
+                acquire = { SuspendFile(&quot;FP_note.txt&quot;).open() },
+                use = { never&lt;Unit&gt;() },
+                release = { file, exitCase -&gt;
+                    when(exitCase) {
+                        is ExitCase.Completed -&gt; { println(&quot;Release with Completed&quot;) }
+                        is ExitCase.Cancelled -&gt; { println(&quot;Release with Cancelled&quot;) } // will run
+                        is ExitCase.Failure -&gt; { println(&quot;Release with Failure&quot;) }
+                    }
+                    file.close()
+                }
+            )
+        }
+
+        job.cancel()
+    }
+        
+    // File [FP_note.txt] opened
+    // Release with Cancelled
+    // File [FP_note.txt] closed
+}
 </code></pre>
 
             </section>
         
             <section >
-                <p>If you fail or cancel on <code>acquire</code>, <code>release</code> is not called</p>
+                <p>If you fail or cancel on <code>acquire</code>, then <code>release</code> is not called</p>
 <p>➡️ Can’t release something we never acquired</p>
 
             </section>
@@ -561,7 +675,17 @@ p {
                 <h3><a id="user-content-limitations" class="anchor" href="#limitations" aria-hidden="true"></a>Limitations</h3>
 <p><code>bracket</code> and <code>bracketCase</code> tied to decide how to <strong>use</strong> the resource when we <code>acquire</code> it</p>
 <p>➡️ Can we separate <code>acquire</code> and <code>use</code> ?</p>
-<pre><code class="language-kotlin=">// sample for bracket and bracketCase definition
+<pre><code class="language-kotlin=">suspend fun &lt;A, B&gt; bracket(
+  acquire: suspend () -&gt; A,
+  use: suspend (A) -&gt; B, // this makes it hardly reusable
+  release: suspend (A) -&gt; Unit
+): B
+
+suspend fun &lt;A, B&gt; bracketCase(
+  acquire: suspend () -&gt; A, 
+  use: suspend (A) -&gt; B, // this makes it hardly reusable
+  release: suspend (A, ExitCase) -&gt; Unit
+): B
 </code></pre>
 
             </section>
@@ -575,7 +699,7 @@ p {
     
     <section>
         <section >
-            <h3><a id="user-content-resource" class="anchor" href="#resource" aria-hidden="true"></a>Resource</h3>
+            <h3><a id="user-content-resource" class="anchor" href="#resource" aria-hidden="true"></a><a href="https://arrow-kt.io/docs/apidocs/arrow-fx-coroutines/arrow.fx.coroutines/-resource/index.html">Resource</a></h3>
 <ul>
 <li>Declare <code>acquire</code> and <code>release</code></li>
 <li>It’s a datatype
@@ -583,7 +707,7 @@ p {
 <li>➡️ we can pass around or inject and reuse</li>
 </ul>
 </li>
-<li>It’s a <strong>Monad</strong>
+<li>Adhere to <a href="https://arrow-kt.io/docs/patterns/monads/index.html#monad-laws">Monad Laws</a> like <code>Either</code>, <code>Option</code>
 <ul>
 <li>➡️ <code>map</code>, <code>flatMap</code>, <code>traverse</code>, …</li>
 <li>➡️ compose with other <code>suspend</code> operations</li>
@@ -594,14 +718,67 @@ p {
             </section>
         
             <section >
-                <pre><code class="language-kotlin=">// sample for Resource
+                <pre><code class="language-kotlin=">import arrow.fx.coroutines.ExitCase
+import arrow.fx.coroutines.Resource
+import other.model.SuspendFile
+
+suspend fun main() {
+    val resource = Resource(
+        acquire = { SuspendFile(&quot;FP_note.txt&quot;).open() },
+        release = { file, exitCase -&gt;
+            when(exitCase) {
+                is ExitCase.Completed -&gt; { println(&quot;Release with Completed&quot;) }
+                is ExitCase.Cancelled -&gt; { println(&quot;Release with Cancelled&quot;) }
+                is ExitCase.Failure -&gt; { println(&quot;Release with Failure&quot;) }
+            }
+            file.close()
+        }
+    )
+
+    // reuse the Resource
+    resource.use { file -&gt; println(file.readContent()) }
+    println(&quot;---&quot;)
+    resource.use { file -&gt; println(&quot;Just want to print the file name: ${file.fileName}&quot;) }
+
+    // File [FP_note.txt] opened
+    // The content of [FP_note.txt]
+    // Release with Completed
+    // File [FP_note.txt] closed
+    // ---
+    // File [FP_note.txt] opened
+    // Just want to print the file name: FP_note.txt
+    // Release with Completed
+    // File [FP_note.txt] closed
+}
 </code></pre>
 
             </section>
         
             <section >
-                <p><font size="6">⚠️ Can be inefficient to acquire and release every time if we have many operations to perform over the same resource</font></p>
-<pre><code class="language-kotlin=">// sample for use the same item several times
+                <p><font size="6">⚠️ Can be inefficient to <strong>acquire and release every time</strong> if we have many operations to perform over the same resource</font></p>
+<pre><code class="language-kotlin=">import arrow.fx.coroutines.ExitCase
+import arrow.fx.coroutines.Resource
+import other.model.SuspendFile
+
+suspend fun main() {
+    val resource = Resource(
+        acquire = { SuspendFile(&quot;FP_note.txt&quot;).open() },
+        release = { file, exitCase -&gt;
+            when(exitCase) {
+                is ExitCase.Completed -&gt; { println(&quot;Release with Completed&quot;) }
+                is ExitCase.Cancelled -&gt; { println(&quot;Release with Cancelled&quot;) }
+                is ExitCase.Failure -&gt; { println(&quot;Release with Failure&quot;) }
+            }
+            file.close()
+        }
+    )
+    
+    for (idx in 1..5) {
+        // acquire and release every time
+        resource.use { file -&gt; println(&quot;Use the same Resource($idx/5): ${file.readContent()}&quot;) }
+        println(&quot;---&quot;)
+    }
+}
 </code></pre>
 
             </section>
@@ -615,30 +792,69 @@ p {
 <li>➡️ reuse connection from a pool</li>
 </ul>
 </li>
-<li>Push the problem into implementation details</li>
+<li>Push the problem into implementation details
+<ul>
+<li>➡️ we can still rely on the <em>abstractions</em></li>
+</ul>
+</li>
 </ul>
 
             </section>
         
             <section >
-                <p><font size="6">🔍 Resources guarantee that their release finalizers are always invoked in the correct <strong>order</strong></font></p>
-<pre><code class="language-kotlin=">// sample for Resource with sequence source 
+                <h3><a id="user-content-compose-resource" class="anchor" href="#compose-resource" aria-hidden="true"></a>Compose Resource</h3>
+<p><font size="6">🔍 Resources guarantee that their release finalizers are always invoked in the correct <strong>order</strong> when <code>Cancelled</code> and <code>Failure</code></font></p>
+<pre><code class="language-kotlin=">import arrow.core.Either
+import arrow.fx.coroutines.ExitCase
+import arrow.fx.coroutines.Resource
+import other.model.SuspendFile
+
+suspend fun printExitCaseThenClose(file: SuspendFile, exitCase: ExitCase) {
+    when(exitCase) {
+        is ExitCase.Completed -&gt; { println(&quot;Release with Completed&quot;) }
+        is ExitCase.Cancelled -&gt; { println(&quot;Release with Cancelled&quot;) }
+        is ExitCase.Failure -&gt; { println(&quot;Release with Failure&quot;) }
+    }
+    file.close()
+}
+
+suspend fun main() {
+    val resources = Resource(
+        acquire = { SuspendFile(&quot;FP_note.txt&quot;).open() },
+        release = { file, exitCase -&gt; printExitCaseThenClose(file, exitCase) }
+    ).zip(
+        Resource(
+            acquire = { SuspendFile(&quot;Domain Modeling Made Functional.pdf&quot;).open() },
+            release = { file, exitCase -&gt; printExitCaseThenClose(file, exitCase) }
+        ),
+        Resource(
+            acquire = { SuspendFile(&quot;end of a life.mp3&quot;).open() },
+            release = { file, exitCase -&gt; printExitCaseThenClose(file, exitCase) }
+        )
+    ) { file1, file2, file3 -&gt;
+        println(&quot;Zip Resources [${file1.fileName}], [${file2.fileName}], [${file3.fileName}]&quot;)
+        Triple(file1, file2, file3)
+    }
+
+    Either.catch {
+        resources.use { files -&gt; throw RuntimeException(&quot;Boom!&quot;) } // guarantee the release order
+    }
+
+    // Release with Failure
+    // File [end of a life.mp3] closed
+    // Release with Failure
+    // File [Domain Modeling Made Functional.pdf] closed
+    // Release with Failure
+    // File [FP_note.txt] closed
+}
 </code></pre>
 
             </section>
         
             <section >
-                <p>If you fail or cancel on <code>acquire</code>, <code>release</code> is not called</p>
+                <p>If you fail or cancel on <code>acquire</code>, then <code>release</code> is not called</p>
 <p>➡️ Can’t release something we never acquired</p>
 <p>🔍 <code>acquire</code> &amp; <code>release</code> step are <code>NonCancellable</code></p>
-
-            </section>
-        
-            <section >
-                <h3><a id="user-content-resource-dsl" class="anchor" href="#resource-dsl" aria-hidden="true"></a>Resource DSL</h3>
-<p><code>resource</code> with <code>release</code> / <code>releaseCase</code></p>
-<pre><code class="language-kotlin=">// sample for Resource DSL
-</code></pre>
 
             </section>
         
@@ -656,7 +872,32 @@ p {
             </section>
         
             <section >
-                <pre><code class="language-kotlin=">// sample for Resource error handling
+                <pre><code class="language-kotlin=">import arrow.core.Either
+import arrow.fx.coroutines.ExitCase
+import arrow.fx.coroutines.Resource
+import other.model.SuspendFile
+
+suspend fun main() {
+    val resource = Resource(
+        acquire = { SuspendFile(&quot;FP_note.txt&quot;).open() },
+        release = { file, exitCase -&gt;
+            when(exitCase) {
+                is ExitCase.Completed -&gt; { println(&quot;Release with Completed&quot;) }
+                is ExitCase.Cancelled -&gt; { println(&quot;Release with Cancelled&quot;) }
+                is ExitCase.Failure -&gt; { println(&quot;Release with Failure&quot;) } // will run
+            }
+            file.close()
+        }
+    )
+
+    val result = Either.catch {
+        resource.use { throw RuntimeException(&quot;Boom!&quot;) }
+    }
+
+    // File [FP_note.txt] opened
+    // Release with Failure
+    // File [FP_note.txt] closed
+}
 </code></pre>
 
             </section>
@@ -664,7 +905,36 @@ p {
             <section >
                 <h3><a id="user-content-cancellation-handling-1" class="anchor" href="#cancellation-handling-1" aria-hidden="true"></a>Cancellation Handling</h3>
 <p>Release when the coroutine is cancelled</p>
-<pre><code class="language-kotlin=">// sample for Resource Cancellation handling
+<pre><code class="language-kotlin=">import arrow.fx.coroutines.ExitCase
+import arrow.fx.coroutines.Resource
+import arrow.fx.coroutines.never
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import other.model.SuspendFile
+
+suspend fun main() {
+    coroutineScope {
+        val resource = Resource(
+            acquire = { SuspendFile(&quot;FP_note.txt&quot;).open() },
+            release = { file, exitCase -&gt;
+                when(exitCase) {
+                    is ExitCase.Completed -&gt; { println(&quot;Release with Completed&quot;) }
+                    is ExitCase.Cancelled -&gt; { println(&quot;Release with Cancelled&quot;) } // will run
+                    is ExitCase.Failure -&gt; { println(&quot;Release with Failure&quot;) }
+                }
+                file.close()
+            }
+        )
+
+        val job = async { resource.use { never&lt;Unit&gt;() } }
+
+        job.cancel()
+    }
+
+    // File [FP_note.txt] opened
+    // Release with Cancelled
+    // File [FP_note.txt] closed
+}
 </code></pre>
 
             </section>
@@ -678,20 +948,26 @@ p {
     
     <section>
         <section >
-            <h3><a id="user-content-guarantee" class="anchor" href="#guarantee" aria-hidden="true"></a>guarantee</h3>
+            <h3><a id="user-content-guarantee" class="anchor" href="#guarantee" aria-hidden="true"></a><a href="https://arrow-kt.io/docs/apidocs/arrow-fx-coroutines/arrow.fx.coroutines/guarantee.html">guarantee</a></h3>
 <ul>
 <li>Guarantee execution of a given <code>finalizer</code> after <code>fa</code> regardless of success, error or cancellation</li>
 <li>Not meant for handling resources but any suspended effects</li>
 </ul>
-<pre><code class="language-kotlin=">// sample for guarantee definition
+<pre><code class="language-kotlin=">suspend fun &lt;A&gt; guarantee(
+  fa: suspend () -&gt; A, 
+  finalizer: suspend () -&gt; Unit
+): A
 </code></pre>
 
             </section>
         
             <section >
-                <h3><a id="user-content-guaranteecase" class="anchor" href="#guaranteecase" aria-hidden="true"></a>guaranteeCase</h3>
-<p>Same as <code>guarantee</code>, but <code>finalizer</code> with case</p>
-<pre><code class="language-kotlin=">// sample for guaranteeCase definition
+                <h3><a id="user-content-guaranteecase" class="anchor" href="#guaranteecase" aria-hidden="true"></a><a href="https://arrow-kt.io/docs/apidocs/arrow-fx-coroutines/arrow.fx.coroutines/guarantee-case.html">guaranteeCase</a></h3>
+<p>Same as <code>guarantee</code>, but <code>finalizer</code> with <a href="https://arrow-kt.io/docs/apidocs/arrow-fx-coroutines/arrow.fx.coroutines/"><code>ExitCase</code></a></p>
+<pre><code class="language-kotlin=">suspend fun &lt;A&gt; guaranteeCase(
+  fa: suspend () -&gt; A, 
+  finalizer: suspend (ExitCase) -&gt; Unit
+): A
 </code></pre>
 
             </section>
@@ -710,7 +986,26 @@ p {
             </section>
         
             <section >
-                <pre><code class="language-kotlin=">// sample for guaranteeCase error handling
+                <pre><code class="language-kotlin=">import arrow.core.Either
+import arrow.fx.coroutines.ExitCase
+import arrow.fx.coroutines.guaranteeCase
+
+suspend fun main() {
+    val result = Either.catch {
+        guaranteeCase(
+            fa = { throw RuntimeException(&quot;Boom!&quot;) },
+            finalizer = { exitCase -&gt;
+                when(exitCase) {
+                    is ExitCase.Completed -&gt; { println(&quot;Finalizer with Completed&quot;) }
+                    is ExitCase.Cancelled -&gt; { println(&quot;Finalizer with Cancelled&quot;) }
+                    is ExitCase.Failure -&gt; { println(&quot;Finalizer with Failure&quot;) } // will run
+                }
+            }
+        )
+    }
+
+    println(result) // Either.Left(java.lang.RuntimeException: Boom!)
+}
 </code></pre>
 
             </section>
@@ -718,16 +1013,64 @@ p {
             <section >
                 <h3><a id="user-content-cancellation-handling-2" class="anchor" href="#cancellation-handling-2" aria-hidden="true"></a>Cancellation Handling</h3>
 <p>Run <code>finalizer</code> when the coroutine is cancelled</p>
-<pre><code class="language-kotlin=">// sample for guaranteeCase Cancellation handling
+<pre><code class="language-kotlin=">import arrow.fx.coroutines.ExitCase
+import arrow.fx.coroutines.guaranteeCase
+import arrow.fx.coroutines.never
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+
+suspend fun main() {
+    coroutineScope {
+        val job = async {
+            guaranteeCase(
+                fa = { never&lt;Unit&gt;() },
+                finalizer = { exitCase -&gt;
+                    when(exitCase) {
+                        is ExitCase.Completed -&gt; { println(&quot;Finalizer with Completed&quot;) }
+                        is ExitCase.Cancelled -&gt; { println(&quot;Finalizer with Cancelled&quot;) } // will run
+                        is ExitCase.Failure -&gt; { println(&quot;Finalizer with Failure&quot;) }
+                    }
+                }
+            )
+        }
+
+        job.cancel()
+    }
+}
 </code></pre>
 
             </section>
         
             <section >
-                <h3><a id="user-content-oncancel" class="anchor" href="#oncancel" aria-hidden="true"></a>onCancel</h3>
+                <h3><a id="user-content-oncancel" class="anchor" href="#oncancel" aria-hidden="true"></a><a href="https://arrow-kt.io/docs/apidocs/arrow-fx-coroutines/arrow.fx.coroutines/on-cancel.html">onCancel</a></h3>
 <p>Register an <code>onCancel</code> handler after <code>fa</code></p>
 <p>➡️ only be invoked when the coroutine is cancelled</p>
-<pre><code class="language-kotlin=">// sample for onCancel Cancellation handling
+<pre><code class="language-kotlin=">suspend fun &lt;A&gt; onCancel(
+  fa: suspend () -&gt; A, 
+  onCancel: suspend () -&gt; Unit
+): A // pass `fa` to `guaranteeCase` and only invoke `onCancel` when `ExitCase.Cancelled`
+</code></pre>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">import arrow.fx.coroutines.never
+import arrow.fx.coroutines.onCancel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+
+suspend fun main() {
+    coroutineScope {
+        val job = async {
+            onCancel(
+                fa = { never&lt;Unit&gt;() },
+                onCancel = { println(&quot;Cancelled!&quot;) } // will run
+            )
+        }
+
+        job.cancel()
+    }
+}
 </code></pre>
 
             </section>
@@ -741,7 +1084,7 @@ p {
     
     <section>
         <section >
-            <h3><a id="user-content-circuitbreaker" class="anchor" href="#circuitbreaker" aria-hidden="true"></a>CircuitBreaker</h3>
+            <h3><a id="user-content-circuitbreaker" class="anchor" href="#circuitbreaker" aria-hidden="true"></a><a href="https://arrow-kt.io/docs/apidocs/arrow-fx-coroutines/arrow.fx.coroutines/-circuit-breaker/index.html">CircuitBreaker</a></h3>
 <p><font size="6">🔍 Detect failures and prevent a failure from constantly recurring</font></p>
 <p>➡️ <strong>Protect</strong> resources or services from being overloaded</p>
 
@@ -770,7 +1113,49 @@ p {
             </section>
         
             <section >
-                <pre><code class="language-kotlin=">// sample for CircuitBreaker
+                <p><a href="https://github.com/arrow-kt/arrow/blob/main/arrow-libs/fx/arrow-fx-coroutines/src/commonMain/kotlin/arrow/fx/coroutines/CircuitBreaker.kt">Source and Sample Code</a></p>
+<pre><code class="language-kotlin=">import arrow.core.Either
+import arrow.fx.coroutines.CircuitBreaker
+import kotlinx.coroutines.delay
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+
+@ExperimentalTime
+suspend fun main() {
+    val circuitBreaker = CircuitBreaker.of(
+        maxFailures = 2,
+        resetTimeout = Duration.seconds(2),
+        exponentialBackoffFactor = 1.2,
+        maxResetTimeout = Duration.seconds(60),
+    )
+    circuitBreaker.protectOrThrow { &quot;I am in Closed: ${circuitBreaker.state()}&quot; }.also(::println)
+
+    println(&quot;Service getting overloaded...&quot;)
+
+    // When an exception occurs it increments the failure counter
+    // A successful request will reset the failure counter to zero
+    Either.catch { circuitBreaker.protectOrThrow { throw RuntimeException(&quot;Service overloaded&quot;) } }.also(::println)
+    Either.catch { circuitBreaker.protectOrThrow { throw RuntimeException(&quot;Service overloaded&quot;) } }.also(::println)
+    println(&quot;Reach the maxFailures threshold = 2&quot;)
+    circuitBreaker.protectEither { }.also { println(&quot;I am Open and short-circuit with ${it}. ${circuitBreaker.state()}&quot;) }
+
+    println(&quot;Service recovering...&quot;).also { delay(2000) }
+
+    println(&quot;After 2 seconds resetTimeout passed, allowing one request to go through as a test&quot;)
+    circuitBreaker.protectOrThrow { &quot;I am running test-request in HalfOpen: ${circuitBreaker.state()}&quot; }.also(::println)
+    println(&quot;I am back to normal state closed ${circuitBreaker.state()}&quot;)
+
+    // I am in Closed: Closed(failures=0)
+    // Service getting overloaded...
+    // Either.Left(java.lang.RuntimeException: Service overloaded)
+    // Either.Left(java.lang.RuntimeException: Service overloaded)
+    // Reach the maxFailures threshold = 2
+    // I am Open and short-circuit with Either.Left(arrow.fx.coroutines.CircuitBreaker$ExecutionRejected). CircuitBreaker.State.Open(startedAt=1635710570531, resetTimeoutNanos=2.0E9, expiresAt=1635710572531)
+    // Service recovering...
+    // After 2 seconds resetTimeout passed, allowing one request to go through as a test
+    // I am running test-request in HalfOpen: HalfOpen(resetTimeoutNanos=2.0E9)
+    // I am back to normal state closed Closed(failures=0)
+}
 </code></pre>
 
             </section>
@@ -796,7 +1181,7 @@ p {
 <li><code>bracket</code> &amp; <code>bracketCase</code> ➡️ <code>acquire</code>, <code>use</code>, <code>release</code></li>
 <li><code>Resource</code> ➡️ <code>acquire</code>, <code>release</code>
 <ul>
-<li>guarantee release finalizers are always invoked in the correct <strong>order</strong></li>
+<li>guarantee release in the correct <strong>order</strong> when <code>Cancelled</code> or <code>Failure</code></li>
 </ul>
 </li>
 </ul>
