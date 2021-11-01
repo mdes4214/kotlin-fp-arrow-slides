@@ -417,7 +417,9 @@ p {
             </section>
         
             <section >
-                <pre><code class="language-kotlin=">suspend fun main() {
+                <pre><code class="language-kotlin=">import arrow.fx.coroutines.Atomic
+
+suspend fun main() {
     val num = Atomic(15)
 
     println(num.access()) // Obtains a snapshot of the current value, and a setter for updating it

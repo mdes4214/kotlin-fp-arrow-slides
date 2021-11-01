@@ -113,6 +113,8 @@ p {
 --
 
 ```kotlin=
+import arrow.fx.coroutines.Atomic
+
 suspend fun main() {
     val num = Atomic(15)
 
