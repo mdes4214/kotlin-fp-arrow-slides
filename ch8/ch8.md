@@ -63,14 +63,13 @@ p {
 
 ### References #2
 
-- https://mjmanaog.medium.com/kotlin-abstract-class-interface-b9c4caf22252
 - https://softwareengineering.stackexchange.com/questions/275891/is-functional-programming-a-viable-alternative-to-dependency-injection-patterns
 
 ---
 
 ### Runtime & Program Logic
 
-(圖示意runtime(How to consume) <-> program description(What it does))
+![](img/runtime.png)
 
 --
 
@@ -112,7 +111,7 @@ p {
 
 #### Push Side Effects to the Edges
 
-(圖，包含entry point, pure architecture, side effects, 左右都是the edge of the world，先不要有dependencies)
+![](img/push_side_effects.png)
 
 🔍 Note the side effects are flagged with `suspend`
 
@@ -162,7 +161,9 @@ In functional programming, there is a `IO` type
 - lift the function ➡️ defer side effects
 
 ```kotlin=
-// sample code for IO
+fun findAuthors(): IO<List<Speaker>> = IO {
+  authorNetworkService.findAuthors()
+}
 ```
 
 --
@@ -180,10 +181,9 @@ In functional programming, there is a `IO` type
 - The value you're returning is a description of an effect
 - ➡️ not performing the effect itself unless you provide the **mentioned environment**
 
---
-
 ```kotlin=
-// sample code 跟IO一樣，但是換成suspend
+suspend fun findAuthors() =
+  authorNetworkService.findAuthors()
 ```
 
 --
@@ -193,7 +193,54 @@ In functional programming, there is a `IO` type
 Leverage `suspend`
 
 ```kotlin=
-// 配合上面的reference，sample code寫一個logger class, info那些寫suspend fun 回Either<Error, T>，T用泛型，等於可以composable & reusable
+import arrow.core.Either
+import arrow.core.computations.either
+import arrow.core.right
+import org.apache.commons.logging.LogFactory
+import other.model.*
+
+object MyLogger {
+    private val logger = LogFactory.getLog(MyLogger::class.java)
+
+    suspend fun <T> info(message: String, data: T): Either<Error, T> =
+        Either.catch {
+            logger.info(message)
+            data
+        }.mapLeft { Error.LoggerError }
+}
+
+suspend fun main() {
+    val fileName = FileName("Note_A")
+    val newTag = Tag.TYPE_A
+    val updatedFileTag = either<Error, Tag> {
+        val file = downloadFile(fileName).bind()
+        val updatedFile = updateTag(file, newTag).bind()
+        MyLogger.info("My File after updating tag: $file", file).bind()
+        val uploadedFile = uploadFile(updatedFile).bind()
+        uploadedFile.header.metadata.tag
+    }
+}
+
+sealed class Error {
+    object UploadFileError : Error()
+    object FileNotFound : Error()
+    object InvalidTag : Error()
+    object LoggerError: Error()
+}
+
+suspend fun downloadFile(fileName: FileName): Either<Error.FileNotFound, CustomFile> =
+    CustomFile(
+        header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Note A"), Author("Joe"))),
+        content = Content("Note A Content"),
+        fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(".doc")),
+        name = FileName("Note_A")
+    ).right()
+
+suspend fun updateTag(file: CustomFile, newTag: Tag): Either<Error.InvalidTag, CustomFile> =
+    CustomFile.header.metadata.tag.set(file, newTag).right()
+
+suspend fun uploadFile(file: CustomFile): Either<Error.UploadFileError, CustomFile> =
+    file.right()
 ```
 
 ---
@@ -236,7 +283,20 @@ Leverage `suspend`
 Interpreter evaluates the operation and provides implement details
 
 ```kotlin=
-// sample for ADTs + Interpreter algebras
+sealed class FileDBOps<out A> {
+    data class SaveFile(val file: CustomFile) : FileDBOps<CustomFile>()
+    data class RemoveFile(val fileName: FileName) : FileDBOps<FileName>()
+    data class FindFileByFileName(val fileName: FileName) : FileDBOps<CustomFile>()
+    object FindAll : FileDBOps<List<CustomFile>>()
+}
+
+// Evaluates the operation and provides impl details.
+suspend fun <A> interpreter(deps: Dependencies, op: FileDBOps<A>): A = when (op) {
+    is FileDBOps.SaveFile -> deps.database.insert(op.file)
+    is FileDBOps.RemoveFile -> deps.database.delete(op.fileName)
+    is FileDBOps.FindFileByFileName -> deps.database.get(op.fileName)
+    is FileDBOps.FindAll -> deps.database.loadAll()
+} as A
 ```
 
 --
@@ -244,7 +304,12 @@ Interpreter evaluates the operation and provides implement details
 ### Interface
 
 ```kotlin=
-// sample for interface algebras
+interface FileDBOps {
+    suspend fun saveFile(file: CustomFile): CustomFile
+    suspend fun removeFile(fileName: FileName): FileName
+    suspend fun findFileByFileName(fileName: FileName): CustomFile
+    suspend fun findAll(): List<CustomFile>
+}
 ```
 
 🤔 How to implement and "pass" to our program ?
@@ -293,7 +358,7 @@ we usually need to deal with side effects
 
 #### Push Side Effects to the Edges
 
-(圖，包含entry point, pure architecture, side effects, 左右都是the edge of the world，這次要有dependencies)
+![](img/push_side_effects_2.png)
 
 - Target abstractions, provide side effects as **implementation details**
   - **Inject** the implementation details
@@ -323,7 +388,26 @@ we usually need to deal with side effects
 --
 
 ```kotlin=
-// sample for 一系列dependencies extension function
+class Dependencies(
+    val authorService: AuthorServiceOps,
+    val fileService: FileServiceOps,
+    val tagRepository: TagDBOps
+) {}
+
+suspend fun Dependencies.findAllTags(): List<Tag> =
+    tagRepository.findAll()
+
+suspend fun Dependencies.loadAuthors(): List<Author> =
+    authorService.loadAuthors()
+
+suspend fun Dependencies.loadFiles(): List<CustomFile> {
+    val authors = authorService.loadAuthors()
+    val files = fileService.findFilesByAuthor(authors)
+    val tags = tagRepository.findAll()
+    return files.map {
+        CustomFile.header.metadata.tag.set(it, tags.first())
+    }
+}
 ```
 
 --
@@ -331,10 +415,89 @@ we usually need to deal with side effects
 Only pass dependencies on the first call.
 
 ```kotlin=
-// sample for Dependencies initialize and pass other dependency scopes as arguments
+suspend fun main() { // Edge of the world
+    val deps = Dependencies(AuthorService(), FileService(), TagRepository())
+    val validTalks = deps.loadFiles()
+    println(validTalks)
+}
 ```
 
 🔍 Extension functions are resolved statically, hence this approach is compile time checked.
+
+--
+
+```kotlin=
+import other.model.*
+
+interface AuthorServiceOps {
+    suspend fun loadAuthors(): List<Author>
+}
+
+interface FileServiceOps {
+    suspend fun findFilesByAuthor(fileNames: List<Author>): List<CustomFile>
+}
+
+interface TagDBOps {
+    suspend fun findAll(): List<Tag>
+}
+
+class AuthorService : AuthorServiceOps {
+    override suspend fun loadAuthors(): List<Author> =
+        listOf(
+            Author("Scott Wlaschin"),
+            Author("Calliope Mori")
+        )
+}
+
+class FileService : FileServiceOps {
+    override suspend fun findFilesByAuthor(fileNames: List<Author>): List<CustomFile> =
+        listOf(
+            CustomFile(
+                header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Domain Modeling Made Functional"), Author("Scott Wlaschin"))),
+                content = Content("The useful knowledge of Domain Modeling and design mindset."),
+                fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(".pdf")),
+                name = FileName("Domain Modeling Made Functional")
+            ),
+            CustomFile(
+                header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("end of a life"), Author("Calliope Mori"))),
+                content = Content("A beautiful song."),
+                fileFormat = CustomFileFormat.MediaFile.AudioFile(AudioFileExtension(".mp3"), BitRateKBitPerS(320)),
+                name = FileName("end of a life")
+            )
+        )
+}
+
+class TagRepository : TagDBOps {
+    override suspend fun findAll(): List<Tag> = Tag.values().toList()
+}
+
+class Dependencies(
+    val authorService: AuthorServiceOps,
+    val fileService: FileServiceOps,
+    val tagRepository: TagDBOps
+) {}
+
+suspend fun Dependencies.findAllTags(): List<Tag> =
+    tagRepository.findAll()
+
+suspend fun Dependencies.loadAuthors(): List<Author> =
+    authorService.loadAuthors()
+
+suspend fun Dependencies.loadFiles(): List<CustomFile> {
+    val authors = authorService.loadAuthors()
+    val files = fileService.findFilesByAuthor(authors)
+    val tags = tagRepository.findAll()
+    return files.map {
+        CustomFile.header.metadata.tag.set(it, tags.first())
+    }
+}
+
+suspend fun main() { // Edge of the world
+    val deps = Dependencies(AuthorService(), FileService(), TagRepository())
+    val validTalks = deps.loadFiles()
+    println(validTalks)
+}
+```
 
 --
 
@@ -345,7 +508,12 @@ Any program with effects can be described as
 2. `suspend Dependencies.() -> Result`
 
 ```kotlin=
-// sample for 上面兩者的比較，註明第二種是implicit
+suspend fun loadAuthors(deps: Dependencies): List<Author> =
+    deps.authorService.loadAuthors()
+
+// implicitly pass dependencies
+suspend fun Dependencies.loadAuthors(): List<Author> =
+    authorService.loadAuthors()
 ```
 
 --
@@ -360,10 +528,18 @@ Any program with effects can be described as
 
 `A.() -> B`
 
-➡️ Used for [DSL](https://stackoverflow.com/questions/45875491/what-is-a-receiver-in-kotlin) and... remember the Scope Function ?
+➡️ Used for [DSL](https://stackoverflow.com/questions/45875491/what-is-a-receiver-in-kotlin) and... 
+
+remember the *Scope Function* ?
 
 ```kotlin=
-// apply{}, let{}的定義
+public inline fun <T> T.apply(block: T.() -> Unit): T {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    block()
+    return this
+}
 ```
 
 ---
@@ -372,14 +548,44 @@ Any program with effects can be described as
 
 <font size="6">We can segregate scopes and compose in different ways depending on the use cases we need to model.</font>
 
-(圖，兩層scope就好，配合後面的sample code)
+![](img/scope.png)
 
 --
 
 ### Dependency Scoping
 
 ```kotlin=
-// sample for 上圖的兩層scope
+// An example of an application wide scope for app wide dependencies.
+abstract class AppScope {
+    val httpClient: HttpClient by lazy { HttpClient() } // lazy initialization
+    val database: Database by lazy { Database() }
+    val logger: Logger by lazy { Logger() }
+}
+
+// Our application class
+object Application {
+    // Retained as singleton at an application level
+    val diScope = object : AppScope() {}
+}
+
+// Our service scope
+interface AuthorScope {
+    private val appScope: AppScope get() = Application.diScope
+    val authorNetworkService: AuthorNetworkOps get() = AutherNetworkService(appScope.httpClient) // algebra
+    val authorRepository: AuthorDBOps get() = AuthorRepository(appScope.database)// algebra
+}
+
+interface FileScope {
+    private val appScope: AppScope get() = Application.diScope
+    val fileNetworkService: FileNetworkOps get() = FileNetworkService(appScope.httpClient) // algebra
+    val fileRepository: FileDBOps get() = FileRepository(appScope.database)// algebra
+}
+
+interface TagScope {
+    private val appScope: AppScope get() = Application.diScope
+    val tagNetworkService: TagNetworkOps get() = TagNetworkService(appScope.httpClient) // algebra
+    val tagRepository: TagDBOps get() = TagRepository(appScope.database)// algebra
+}
 ```
 
 ---
@@ -387,17 +593,44 @@ Any program with effects can be described as
 ### [Delegation Pattern](https://en.wikipedia.org/wiki/Delegation_pattern)
 
 ```kotlin=
-// sample from wiki, 標示出delegate(代表), delegator(委託人), delegation(委託)，加上main
+class Rectangle(val width: Int, val height: Int) { // Delegate
+    fun area() = width * height
+}
+
+class Window(val bounds: Rectangle) { // Delegator
+    fun area() = bounds.area() // Delegation
+}
+
+fun main() {
+    val rectangle = Rectangle(5, 10)
+    val window = Window(rectangle)
+    println(window.area()) // 5 * 10 = 50
+}
 ```
 
 --
 
 ### [Delegation in Kotlin](https://kotlinlang.org/docs/delegation.html)
 
-`by`
+Delegation with `by`
 
 ```kotlin=
-// sample from wiki, 換成by，一樣標出那三個，一樣有main
+interface ClosedShape {
+    fun area(): Int
+}
+
+class Rectangle(val width: Int, val height: Int) : ClosedShape { // Delegate
+    override fun area() = width * height
+}
+
+// Delegator
+class Window(val bounds: ClosedShape) : ClosedShape by bounds // Delegation
+
+fun main() {
+    val rectangle = Rectangle(5, 10)
+    val window = Window(rectangle)
+    println(window.area()) // 5 * 10 = 50
+}
 ```
 
 --
@@ -414,8 +647,22 @@ Any program with effects can be described as
 
 --
 
+Initialize with `lazy`
+
 ```kotlin=
-// sample for lazy
+val lazyString: String by lazy {
+    println("Initialize my lazyString...")
+    "Hello"
+}
+
+fun main() {
+    println(lazyString) // execute the lambda passed to lazy(), and remember the result
+    // Initialize my lazyString...
+    // Hello
+
+    println(lazyString) // simply return the remembered result
+    // Hello
+}
 ```
 
 ---
@@ -423,7 +670,13 @@ Any program with effects can be described as
 ### Instance of Abstract Class
 
 ```kotlin=
-// very simple abstract class to show abstract class cannot have a instance
+abstract class MyAbstractString {
+    val myString = "Hello"
+}
+
+fun main() {
+    val myAbstractString = MyAbstractString() // Error: Cannot create an instance of an abstract class
+}
 ```
 
 --
@@ -431,16 +684,101 @@ Any program with effects can be described as
 ### Object of Anonymous Class
 
 ```kotlin=
-// sample for object expression
+abstract class MyAbstractString {
+    val myString = "Hello"
+}
+
+fun main() {
+    val myAbstractString = object : MyAbstractString() {} // object expressions extend `MyAbstractString`
+    println(myAbstractString.myString)
+}
 ```
 
 ➡️ Singleton
 
 ➡️ [Object Expression](https://kotlinlang.org/docs/object-declarations.html)
 
+--
+
+### Implicit DI
+
+```kotlin=
+import other.model.*
+
+interface AuthorServiceOps {
+    suspend fun loadAuthors(): List<Author>
+}
+
+interface FileServiceOps {
+    suspend fun findFilesByAuthor(fileNames: List<Author>): List<CustomFile>
+}
+
+interface TagDBOps {
+    suspend fun findAll(): List<Tag>
+}
+
+class AuthorService : AuthorServiceOps {
+    override suspend fun loadAuthors(): List<Author> =
+        listOf(
+            Author("Scott Wlaschin"),
+            Author("Calliope Mori")
+        )
+}
+
+class FileService : FileServiceOps {
+    override suspend fun findFilesByAuthor(fileNames: List<Author>): List<CustomFile> =
+        listOf(
+            CustomFile(
+                header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("Domain Modeling Made Functional"), Author("Scott Wlaschin"))),
+                content = Content("The useful knowledge of Domain Modeling and design mindset."),
+                fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(".pdf")),
+                name = FileName("Domain Modeling Made Functional")
+            ),
+            CustomFile(
+                header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title("end of a life"), Author("Calliope Mori"))),
+                content = Content("A beautiful song."),
+                fileFormat = CustomFileFormat.MediaFile.AudioFile(AudioFileExtension(".mp3"), BitRateKBitPerS(320)),
+                name = FileName("end of a life")
+            )
+        )
+}
+
+class TagRepository : TagDBOps {
+    override suspend fun findAll(): List<Tag> = Tag.values().toList()
+}
+
+abstract class Dependencies {
+    val authorService: AuthorServiceOps by lazy { AuthorService() }
+    val fileService: FileServiceOps by lazy { FileService() }
+    val tagRepository: TagDBOps by lazy { TagRepository() }
+}
+
+suspend fun Dependencies.findAllTags(): List<Tag> =
+    tagRepository.findAll()
+
+suspend fun Dependencies.loadAuthors(): List<Author> =
+    authorService.loadAuthors()
+
+suspend fun Dependencies.loadFiles(): List<CustomFile> {
+    val authors = authorService.loadAuthors()
+    val files = fileService.findFilesByAuthor(authors)
+    val tags = tagRepository.findAll()
+    return files.map {
+        CustomFile.header.metadata.tag.set(it, tags.first())
+        it.apply {  }
+    }
+}
+
+suspend fun main() { // Edge of the world
+    val deps = object : Dependencies() {}
+    val validTalks = deps.loadFiles()
+    println(validTalks)
+}
+```
+
 ---
 
-### Abstract Class vs. Interface
+### [Abstract Class vs. Interface](https://mjmanaog.medium.com/kotlin-abstract-class-interface-b9c4caf22252)
 
 Basically, an abstract can do what an interface can
 
@@ -461,7 +799,37 @@ can have ...
 --
 
 ```kotlin=
-// sample for simple abstract class with constructors, init body, properties with value. 
+abstract class Shape {
+    lateinit var color: String
+
+    private val shapeColor: String
+        get() = color
+
+    init {
+        color = "pink"
+    }
+
+    fun defaultColor() {
+        println("The shape's default color is $shapeColor.")
+    }
+
+    abstract fun side(): Int
+    abstract fun computeArea(): Double
+    abstract fun computePerimeter(): Double
+}
+
+class Rectangle(var l: Int, var w: Int) : Shape() {
+    override fun side(): Int = 4
+    override fun computeArea(): Double = (w * l).toDouble()
+    override fun computePerimeter(): Double = (2 * (l + w)).toDouble()
+}
+
+fun main() {
+    val rect = Rectangle(2, 3)
+    println("Area: ${rect.computeArea()}")
+    println("Perimeter: ${rect.computePerimeter()}")
+    rect.defaultColor()
+}
 ```
 
 --
@@ -469,7 +837,11 @@ can have ...
 ➡️ Delegation for lazy initialization
 
 ```kotlin=
-// sample for abstract class dependency scope (same as before)
+abstract class Dependencies {
+    val authorService: AuthorServiceOps by lazy { AuthorService() }
+    val fileService: FileServiceOps by lazy { FileService() }
+    val tagRepository: TagDBOps by lazy { TagRepository() }
+}
 ```
 
 --
@@ -479,7 +851,37 @@ can have ...
 You only want to share behavior with the class but not the code between a set of objects
 
 ```kotlin=
-// sample for simple interface
+interface Shape {
+    fun side(): Int
+    fun computeArea(): Double
+    fun computePerimeter(): Double
+    fun addColor(): String
+}
+
+class Rectangle(var l: Int, var w: Int) : Shape {
+    override fun side(): Int {
+        return 4
+    }
+
+    override fun computeArea(): Double {
+        return (w * l).toDouble()
+    }
+
+    override fun computePerimeter(): Double {
+        return (2 * (l + w)).toDouble()
+    }
+
+    override fun addColor(): String {
+        return "red"
+    }
+}
+
+fun main() {
+    val rect = Rectangle(2, 3)
+    println("Area: ${rect.computeArea()}")
+    println("Perimeter: ${rect.computePerimeter()}")
+    println("Color: ${rect.addColor()}")
+}
 ```
 
 --
@@ -487,7 +889,12 @@ You only want to share behavior with the class but not the code between a set of
 ➡️ Set of operations for algebras
 
 ```kotlin=
-// sample for algebras (same as before)
+interface FileDBOps {
+    suspend fun saveFile(file: CustomFile): CustomFile
+    suspend fun removeFile(fileName: FileName): FileName
+    suspend fun findFileByFileName(fileName: FileName): CustomFile
+    suspend fun findAll(): List<CustomFile>
+}
 ```
 
 🔍 Program to an interface, not an implementation.
@@ -499,7 +906,37 @@ You only want to share behavior with the class but not the code between a set of
 Recap the Dependency Scoping
 
 ```kotlin=
-// sample for scoping (same as before)
+// An example of an application wide scope for app wide dependencies.
+abstract class AppScope {
+    val httpClient: HttpClient by lazy { HttpClient() } // lazy initialization
+    val database: Database by lazy { Database() }
+    val logger: Logger by lazy { Logger() }
+}
+
+// Our application class
+object Application {
+    // Retained as singleton at an application level
+    val diScope = object : AppScope() {}
+}
+
+// Our service scope
+interface AuthorScope {
+    private val appScope: AppScope get() = Application.diScope
+    val authorNetworkService: AuthorNetworkOps get() = AutherNetworkService(appScope.httpClient) // algebra
+    val authorRepository: AuthorDBOps get() = AuthorRepository(appScope.database)// algebra
+}
+
+interface FileScope {
+    private val appScope: AppScope get() = Application.diScope
+    val fileNetworkService: FileNetworkOps get() = FileNetworkService(appScope.httpClient) // algebra
+    val fileRepository: FileDBOps get() = FileRepository(appScope.database)// algebra
+}
+
+interface TagScope {
+    private val appScope: AppScope get() = Application.diScope
+    val tagNetworkService: TagNetworkOps get() = TagNetworkService(appScope.httpClient) // algebra
+    val tagRepository: TagDBOps get() = TagRepository(appScope.database)// algebra
+}
 ```
 
 --
@@ -509,7 +946,10 @@ Define scopes as interfaces or abstract classes for flexibility
 ➡️ replace implementation in tests
 
 ```kotlin=
-// sample for 加入scope當參數的實作class
+class AuthorService(private val diScope : AuthorScope = object : AuthorScope {}) {
+    suspend fun loadAuthors(): List<Author> =
+        diScope.authorNetworkService.loadAuthors()
+}
 ```
 
 --
@@ -517,7 +957,23 @@ Define scopes as interfaces or abstract classes for flexibility
 With algebras, we can override the dependencies we want to replace only
 
 ```kotlin=
-// sample for test algebras
+class AuthorServiceTest {
+    private lateinit var authorService: AuthorService
+
+    @Before
+    fun setup() {
+        authorService = AuthorService(diScope = object : AuthorScope {
+            override val authorNetworkService: AuthorNetworkOps = MockAuthorNetworkService()
+            override val authorRepository: AuthorDBOps = MockAuthorRepository()
+        })
+    }
+
+    @Test
+    fun testLoadAuthors() = runBlocking {
+        val actual = authorService.loadAuthors()
+        Assertions.assertEquals(listOf("Joe", "Mark"), actual)
+    }
+}
 ```
 
 ➡️ Mock the dependencies and test without touching the real network or database

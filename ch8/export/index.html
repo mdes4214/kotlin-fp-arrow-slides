@@ -322,25 +322,246 @@ p {
             </section>
         
             <section >
-                <h3><a id="user-content-references" class="anchor" href="#references" aria-hidden="true"></a>References</h3>
+                <h3><a id="user-content-references-1" class="anchor" href="#references-1" aria-hidden="true"></a>References #1</h3>
 <ul>
-<li></li>
+<li><a href="https://book.kotlincn.net/">https://book.kotlincn.net/</a></li>
+<li><a href="https://kotest.io/">https://kotest.io/</a></li>
 </ul>
 
             </section>
         
             <section >
-                <h3><a id="user-content-todo" class="anchor" href="#todo" aria-hidden="true"></a>TODO</h3>
-<pre><code>- Edge of the World
-- OO-FP-OO sandwich
-- Algebras
-    - interface
-    - sealed class
-- Dependency Injection
-    - Explicit, Implicit
-    - extension function, scope, receiver
-- Program to an interface, not an implementation.
-- PBT (Property-Based Testing): corner test cases
+                <h3><a id="user-content-references-2" class="anchor" href="#references-2" aria-hidden="true"></a>References #2</h3>
+<ul>
+<li><a href="https://softwareengineering.stackexchange.com/questions/275891/is-functional-programming-a-viable-alternative-to-dependency-injection-patterns">https://softwareengineering.stackexchange.com/questions/275891/is-functional-programming-a-viable-alternative-to-dependency-injection-patterns</a></li>
+</ul>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-runtime--program-logic" class="anchor" href="#runtime--program-logic" aria-hidden="true"></a>Runtime &amp; Program Logic</h3>
+<p><img src="img/runtime.png" alt=""></p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-runtime" class="anchor" href="#runtime" aria-hidden="true"></a>Runtime</h3>
+<p>🔍 interpreter of the program</p>
+<ul>
+<li>Decide how to consume the program
+<ul>
+<li>➡️ pick the execution strategy</li>
+</ul>
+</li>
+<li>Provide dependencies to the program
+<ul>
+<li>➡️ implementation detail</li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-program-logic" class="anchor" href="#program-logic" aria-hidden="true"></a>Program Logic</h3>
+<p>🔍  agnostic of the runtime</p>
+<ul>
+<li>Program logic can remain pure and abstract
+<ul>
+<li>➡️ lift the function</li>
+<li>➡️ <code>suspend</code></li>
+</ul>
+</li>
+<li>Pure edge to edge
+<ul>
+<li>➡️ <strong>input -&gt; output</strong></li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-how-about-side-effect-" class="anchor" href="#how-about-side-effect-" aria-hidden="true"></a>How about Side Effect ?</h3>
+<p>➡️ <code>suspend</code></p>
+<ul>
+<li>Lift the function and defer side effects to runtime
+<ul>
+<li>the entry point requires providing a runtime (<em>Coroutine</em>) to consume</li>
+</ul>
+</li>
+<li>Allows keeping side effects tracked by compiler
+<ul>
+<li>can’t be called from everywhere</li>
+</ul>
+</li>
+<li>Pure Architecture
+<ul>
+<li>push side effects to the <strong>edges</strong></li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h4><a id="user-content-push-side-effects-to-the-edges" class="anchor" href="#push-side-effects-to-the-edges" aria-hidden="true"></a>Push Side Effects to the Edges</h4>
+<p><img src="img/push_side_effects.png" alt=""></p>
+<p>🔍 Note the side effects are flagged with <code>suspend</code></p>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-logger-in-fp" class="anchor" href="#logger-in-fp" aria-hidden="true"></a>Logger in FP</h3>
+<p>How to do logging in Functional Programming ?</p>
+<ul>
+<li><a href="https://www.raywenderlich.com/9527-functional-programming-with-kotlin-and-arrow-getting-started#toc-anchor-018">Reference 1</a></li>
+<li><a href="https://darrmirr.medium.com/logging-at-functional-programming-efd95da734d1">Reference 2</a></li>
+<li><a href="https://www.reddit.com/r/fsharp/comments/5d8ivi/logging_in_f_or_any_other_functional_language/">Reference 3</a></li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-imperative-vs-declarative" class="anchor" href="#imperative-vs-declarative" aria-hidden="true"></a><a href="https://medium.com/disney-streaming/option-either-state-and-io-imperative-programming-in-a-functional-world-8e176049af81">Imperative vs. Declarative</a></h3>
+<p>The fundamental dichotomy between <em>imperative</em> and <em>functional (declarative)</em> programming</p>
+<p>➡️ statements vs. expressions</p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-statements-vs-expressions" class="anchor" href="#statements-vs-expressions" aria-hidden="true"></a>Statements vs. Expressions</h3>
+<ul>
+<li>Statements
+<ul>
+<li>commands to be executed that <em>interact with</em>, and possibly <em>alter, the world</em></li>
+</ul>
+</li>
+<li>Expressions
+<ul>
+<li><em>pure</em> computations that are evaluated to yield a result</li>
+<li>think <em>arithmetic expressions</em> as the canonical example</li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-how-is-io-" class="anchor" href="#how-is-io-" aria-hidden="true"></a>How is I/O ?</h3>
+<p>I/O operation is a statement with <em>side effects</em>, and neither composable nor reusable.</p>
+<ul>
+<li>read/write files</li>
+<li>interact with database</li>
+<li>standard input and output</li>
+<li><strong>logging</strong></li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-about-io-type" class="anchor" href="#about-io-type" aria-hidden="true"></a>About <code>IO</code> Type</h3>
+<p>In functional programming, there is a <code>IO</code> type</p>
+<ul>
+<li>let the statement return a value of <code>IO&lt;T&gt;</code></li>
+<li>lift the function ➡️ defer side effects</li>
+</ul>
+<pre><code class="language-kotlin=">fun findAuthors(): IO&lt;List&lt;Speaker&gt;&gt; = IO {
+  authorNetworkService.findAuthors()
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-about-io-type-1" class="anchor" href="#about-io-type-1" aria-hidden="true"></a>About <code>IO</code> Type</h3>
+<ul>
+<li><strong>Treat statements as expressions</strong></li>
+<li>Pure &amp; Reusable</li>
+</ul>
+<p>➡️ <a href="https://jorgecastillo.dev/please-try-to-use-io">In Kotlin, that is <code>suspend</code>.</a></p>
+
+            </section>
+        
+            <section >
+                <ul>
+<li>Flagging a side effect as <code>suspend</code> effectively makes it <strong>pure</strong></li>
+<li>The value you’re returning is a description of an effect</li>
+<li>➡️ not performing the effect itself unless you provide the <strong>mentioned environment</strong></li>
+</ul>
+<pre><code class="language-kotlin=">suspend fun findAuthors() =
+  authorNetworkService.findAuthors()
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-sample-of-logger" class="anchor" href="#sample-of-logger" aria-hidden="true"></a>Sample of Logger</h3>
+<p>Leverage <code>suspend</code></p>
+<pre><code class="language-kotlin=">import arrow.core.Either
+import arrow.core.computations.either
+import arrow.core.right
+import org.apache.commons.logging.LogFactory
+import other.model.*
+
+object MyLogger {
+    private val logger = LogFactory.getLog(MyLogger::class.java)
+
+    suspend fun &lt;T&gt; info(message: String, data: T): Either&lt;Error, T&gt; =
+        Either.catch {
+            logger.info(message)
+            data
+        }.mapLeft { Error.LoggerError }
+}
+
+suspend fun main() {
+    val fileName = FileName(&quot;Note_A&quot;)
+    val newTag = Tag.TYPE_A
+    val updatedFileTag = either&lt;Error, Tag&gt; {
+        val file = downloadFile(fileName).bind()
+        val updatedFile = updateTag(file, newTag).bind()
+        MyLogger.info(&quot;My File after updating tag: $file&quot;, file).bind()
+        val uploadedFile = uploadFile(updatedFile).bind()
+        uploadedFile.header.metadata.tag
+    }
+}
+
+sealed class Error {
+    object UploadFileError : Error()
+    object FileNotFound : Error()
+    object InvalidTag : Error()
+    object LoggerError: Error()
+}
+
+suspend fun downloadFile(fileName: FileName): Either&lt;Error.FileNotFound, CustomFile&gt; =
+    CustomFile(
+        header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title(&quot;Note A&quot;), Author(&quot;Joe&quot;))),
+        content = Content(&quot;Note A Content&quot;),
+        fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(&quot;.doc&quot;)),
+        name = FileName(&quot;Note_A&quot;)
+    ).right()
+
+suspend fun updateTag(file: CustomFile, newTag: Tag): Either&lt;Error.InvalidTag, CustomFile&gt; =
+    CustomFile.header.metadata.tag.set(file, newTag).right()
+
+suspend fun uploadFile(file: CustomFile): Either&lt;Error.UploadFileError, CustomFile&gt; =
+    file.right()
 </code></pre>
 
             </section>
@@ -352,10 +573,900 @@ p {
 
 
     
+    <section>
         <section >
-            
-            
+            <h3><a id="user-content-algebras" class="anchor" href="#algebras" aria-hidden="true"></a>Algebras</h3>
+<ul>
+<li>Pure function as <strong>Input -&gt; Output</strong>
+<ul>
+<li>➡️ algebraic equation</li>
+</ul>
+</li>
+<li>Referential Transparency
+<ul>
+<li>➡️ compose pure functions</li>
+<li>➡️ reduce the program to value</li>
+<li>➡️ just like the functions in mathematics</li>
+</ul>
+</li>
+</ul>
+
             </section>
+        
+            <section >
+                <h3><a id="user-content-algebras-1" class="anchor" href="#algebras-1" aria-hidden="true"></a>Algebras</h3>
+<ul>
+<li>If a functional program is “pure functions + immutable data”
+<ul>
+<li>➡️ deterministic algebraic equations</li>
+</ul>
+</li>
+<li>Pure functions ➡️ Operators (<strong>operations</strong>)</li>
+<li>Immutable data ➡️ Values (<strong>objects</strong>)</li>
+<li>Laws to ensure properties of the algebra
+<ul>
+<li>Arrow-kt guarantees integrity and correctness</li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-algebras-2" class="anchor" href="#algebras-2" aria-hidden="true"></a>Algebras</h3>
+<p>🔍 comprised by a set of <strong>objects</strong> and the <strong>operations</strong> to work with those</p>
+<p>⬇️</p>
+<ul>
+<li>ADTs + Interpreter</li>
+<li>Interface</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-adts--interpreter" class="anchor" href="#adts--interpreter" aria-hidden="true"></a>ADTs + Interpreter</h3>
+<p>Interpreter evaluates the operation and provides implement details</p>
+<pre><code class="language-kotlin=">sealed class FileDBOps&lt;out A&gt; {
+    data class SaveFile(val file: CustomFile) : FileDBOps&lt;CustomFile&gt;()
+    data class RemoveFile(val fileName: FileName) : FileDBOps&lt;FileName&gt;()
+    data class FindFileByFileName(val fileName: FileName) : FileDBOps&lt;CustomFile&gt;()
+    object FindAll : FileDBOps&lt;List&lt;CustomFile&gt;&gt;()
+}
+
+// Evaluates the operation and provides impl details.
+suspend fun &lt;A&gt; interpreter(deps: Dependencies, op: FileDBOps&lt;A&gt;): A = when (op) {
+    is FileDBOps.SaveFile -&gt; deps.database.insert(op.file)
+    is FileDBOps.RemoveFile -&gt; deps.database.delete(op.fileName)
+    is FileDBOps.FindFileByFileName -&gt; deps.database.get(op.fileName)
+    is FileDBOps.FindAll -&gt; deps.database.loadAll()
+} as A
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-interface" class="anchor" href="#interface" aria-hidden="true"></a>Interface</h3>
+<pre><code class="language-kotlin=">interface FileDBOps {
+    suspend fun saveFile(file: CustomFile): CustomFile
+    suspend fun removeFile(fileName: FileName): FileName
+    suspend fun findFileByFileName(fileName: FileName): CustomFile
+    suspend fun findAll(): List&lt;CustomFile&gt;
+}
+</code></pre>
+<p>🤔 How to implement and “pass” to our program ?</p>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-dependency-injection" class="anchor" href="#dependency-injection" aria-hidden="true"></a><a href="https://softwareengineering.stackexchange.com/questions/275891/is-functional-programming-a-viable-alternative-to-dependency-injection-patterns">Dependency Injection</a></h3>
+<p>Why dependency management is a big problem in OOP?</p>
+<ul>
+<li>The tight coupling of data and code</li>
+<li>Ubiquitous use of side effects</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <p>🤔 Does we really need Dependency Injection</p>
+<p>in Functional Programming ?</p>
+
+            </section>
+        
+            <section >
+                <p>In functional world,</p>
+<p>if you think in terms of <strong>inputs and outputs</strong> …</p>
+<p>➡️ There is <em>no function dependency, only data dependency</em>.</p>
+<p>🔍 It’s just a composition of (A) -&gt; B, (B) -&gt; C, etc.</p>
+
+            </section>
+        
+            <section >
+                <p>➡️ That’s why FP is easy to test.</p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-with-side-effect" class="anchor" href="#with-side-effect" aria-hidden="true"></a>With Side Effect</h3>
+<p>In real world,</p>
+<p>we usually need to deal with side effects</p>
+<ul>
+<li>➡️ Sometimes need to change implementation</li>
+<li>➡️ Still need DI</li>
+<li>➡️ But we can do it gracefully, make it <em>testable</em></li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h4><a id="user-content-push-side-effects-to-the-edges-1" class="anchor" href="#push-side-effects-to-the-edges-1" aria-hidden="true"></a>Push Side Effects to the Edges</h4>
+<p><img src="img/push_side_effects_2.png" alt=""></p>
+<ul>
+<li>Target abstractions, provide side effects as <strong>implementation details</strong>
+<ul>
+<li><strong>Inject</strong> the implementation details</li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-dependency-injection-in-fp" class="anchor" href="#dependency-injection-in-fp" aria-hidden="true"></a>Dependency Injection in FP</h3>
+<ul>
+<li>Explicit
+<ul>
+<li>➡️ pass dependencies as function arguments</li>
+<li>➡️ <strong>pollute</strong> syntax</li>
+</ul>
+</li>
+<li>Implicit
+<ul>
+<li>➡️ leverage mechanisms to pass dependencies implicitly</li>
+<li>➡️ only initial caller provides them</li>
+<li>➡️ access them only where needed</li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-implicit-di" class="anchor" href="#implicit-di" aria-hidden="true"></a>Implicit DI</h3>
+<p>➡️ via Extension Function</p>
+<ul>
+<li>Work over a <strong>scope</strong></li>
+<li>The other required scopes are provided by initial caller</li>
+<li>Can access to all properties of the scope</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">class Dependencies(
+    val authorService: AuthorServiceOps,
+    val fileService: FileServiceOps,
+    val tagRepository: TagDBOps
+) {}
+
+suspend fun Dependencies.findAllTags(): List&lt;Tag&gt; =
+    tagRepository.findAll()
+
+suspend fun Dependencies.loadAuthors(): List&lt;Author&gt; =
+    authorService.loadAuthors()
+
+suspend fun Dependencies.loadFiles(): List&lt;CustomFile&gt; {
+    val authors = authorService.loadAuthors()
+    val files = fileService.findFilesByAuthor(authors)
+    val tags = tagRepository.findAll()
+    return files.map {
+        CustomFile.header.metadata.tag.set(it, tags.first())
+    }
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p>Only pass dependencies on the first call.</p>
+<pre><code class="language-kotlin=">suspend fun main() { // Edge of the world
+    val deps = Dependencies(AuthorService(), FileService(), TagRepository())
+    val validTalks = deps.loadFiles()
+    println(validTalks)
+}
+</code></pre>
+<p>🔍 Extension functions are resolved statically, hence this approach is compile time checked.</p>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">import other.model.*
+
+interface AuthorServiceOps {
+    suspend fun loadAuthors(): List&lt;Author&gt;
+}
+
+interface FileServiceOps {
+    suspend fun findFilesByAuthor(fileNames: List&lt;Author&gt;): List&lt;CustomFile&gt;
+}
+
+interface TagDBOps {
+    suspend fun findAll(): List&lt;Tag&gt;
+}
+
+class AuthorService : AuthorServiceOps {
+    override suspend fun loadAuthors(): List&lt;Author&gt; =
+        listOf(
+            Author(&quot;Scott Wlaschin&quot;),
+            Author(&quot;Calliope Mori&quot;)
+        )
+}
+
+class FileService : FileServiceOps {
+    override suspend fun findFilesByAuthor(fileNames: List&lt;Author&gt;): List&lt;CustomFile&gt; =
+        listOf(
+            CustomFile(
+                header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title(&quot;Domain Modeling Made Functional&quot;), Author(&quot;Scott Wlaschin&quot;))),
+                content = Content(&quot;The useful knowledge of Domain Modeling and design mindset.&quot;),
+                fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(&quot;.pdf&quot;)),
+                name = FileName(&quot;Domain Modeling Made Functional&quot;)
+            ),
+            CustomFile(
+                header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title(&quot;end of a life&quot;), Author(&quot;Calliope Mori&quot;))),
+                content = Content(&quot;A beautiful song.&quot;),
+                fileFormat = CustomFileFormat.MediaFile.AudioFile(AudioFileExtension(&quot;.mp3&quot;), BitRateKBitPerS(320)),
+                name = FileName(&quot;end of a life&quot;)
+            )
+        )
+}
+
+class TagRepository : TagDBOps {
+    override suspend fun findAll(): List&lt;Tag&gt; = Tag.values().toList()
+}
+
+class Dependencies(
+    val authorService: AuthorServiceOps,
+    val fileService: FileServiceOps,
+    val tagRepository: TagDBOps
+) {}
+
+suspend fun Dependencies.findAllTags(): List&lt;Tag&gt; =
+    tagRepository.findAll()
+
+suspend fun Dependencies.loadAuthors(): List&lt;Author&gt; =
+    authorService.loadAuthors()
+
+suspend fun Dependencies.loadFiles(): List&lt;CustomFile&gt; {
+    val authors = authorService.loadAuthors()
+    val files = fileService.findFilesByAuthor(authors)
+    val tags = tagRepository.findAll()
+    return files.map {
+        CustomFile.header.metadata.tag.set(it, tags.first())
+    }
+}
+
+suspend fun main() { // Edge of the world
+    val deps = Dependencies(AuthorService(), FileService(), TagRepository())
+    val validTalks = deps.loadFiles()
+    println(validTalks)
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-implicit-di-1" class="anchor" href="#implicit-di-1" aria-hidden="true"></a>Implicit DI</h3>
+<p>Any program with effects can be described as</p>
+<ol>
+<li><code>suspend (Dependencies) -&gt; Result</code></li>
+<li><code>suspend Dependencies.() -&gt; Result</code></li>
+</ol>
+<pre><code class="language-kotlin=">suspend fun loadAuthors(deps: Dependencies): List&lt;Author&gt; =
+    deps.authorService.loadAuthors()
+
+// implicitly pass dependencies
+suspend fun Dependencies.loadAuthors(): List&lt;Author&gt; =
+    authorService.loadAuthors()
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h4><a id="user-content-a-nice-approach" class="anchor" href="#a-nice-approach" aria-hidden="true"></a>A nice approach</h4>
+<ul>
+<li>pass dependencies <em>implicitly</em> via extension functions</li>
+<li>leave <em>explicit</em> parameters for the payload of our functions</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-further-reading---receiver" class="anchor" href="#further-reading---receiver" aria-hidden="true"></a>Further reading - <a href="https://kotlinlang.org/docs/lambdas.html#function-literals-with-receiver">Receiver</a></h3>
+<p><code>A.() -&gt; B</code></p>
+<p>➡️ Used for <a href="https://stackoverflow.com/questions/45875491/what-is-a-receiver-in-kotlin">DSL</a> and…</p>
+<p>remember the <em>Scope Function</em> ?</p>
+<pre><code class="language-kotlin=">public inline fun &lt;T&gt; T.apply(block: T.() -&gt; Unit): T {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    block()
+    return this
+}
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-dependency-scoping" class="anchor" href="#dependency-scoping" aria-hidden="true"></a>Dependency Scoping</h3>
+<p><font size="6">We can segregate scopes and compose in different ways depending on the use cases we need to model.</font></p>
+<p><img src="img/scope.png" alt=""></p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-dependency-scoping-1" class="anchor" href="#dependency-scoping-1" aria-hidden="true"></a>Dependency Scoping</h3>
+<pre><code class="language-kotlin=">// An example of an application wide scope for app wide dependencies.
+abstract class AppScope {
+    val httpClient: HttpClient by lazy { HttpClient() } // lazy initialization
+    val database: Database by lazy { Database() }
+    val logger: Logger by lazy { Logger() }
+}
+
+// Our application class
+object Application {
+    // Retained as singleton at an application level
+    val diScope = object : AppScope() {}
+}
+
+// Our service scope
+interface AuthorScope {
+    private val appScope: AppScope get() = Application.diScope
+    val authorNetworkService: AuthorNetworkOps get() = AutherNetworkService(appScope.httpClient) // algebra
+    val authorRepository: AuthorDBOps get() = AuthorRepository(appScope.database)// algebra
+}
+
+interface FileScope {
+    private val appScope: AppScope get() = Application.diScope
+    val fileNetworkService: FileNetworkOps get() = FileNetworkService(appScope.httpClient) // algebra
+    val fileRepository: FileDBOps get() = FileRepository(appScope.database)// algebra
+}
+
+interface TagScope {
+    private val appScope: AppScope get() = Application.diScope
+    val tagNetworkService: TagNetworkOps get() = TagNetworkService(appScope.httpClient) // algebra
+    val tagRepository: TagDBOps get() = TagRepository(appScope.database)// algebra
+}
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-delegation-pattern" class="anchor" href="#delegation-pattern" aria-hidden="true"></a><a href="https://en.wikipedia.org/wiki/Delegation_pattern">Delegation Pattern</a></h3>
+<pre><code class="language-kotlin=">class Rectangle(val width: Int, val height: Int) { // Delegate
+    fun area() = width * height
+}
+
+class Window(val bounds: Rectangle) { // Delegator
+    fun area() = bounds.area() // Delegation
+}
+
+fun main() {
+    val rectangle = Rectangle(5, 10)
+    val window = Window(rectangle)
+    println(window.area()) // 5 * 10 = 50
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-delegation-in-kotlin" class="anchor" href="#delegation-in-kotlin" aria-hidden="true"></a><a href="https://kotlinlang.org/docs/delegation.html">Delegation in Kotlin</a></h3>
+<p>Delegation with <code>by</code></p>
+<pre><code class="language-kotlin=">interface ClosedShape {
+    fun area(): Int
+}
+
+class Rectangle(val width: Int, val height: Int) : ClosedShape { // Delegate
+    override fun area() = width * height
+}
+
+// Delegator
+class Window(val bounds: ClosedShape) : ClosedShape by bounds // Delegation
+
+fun main() {
+    val rectangle = Rectangle(5, 10)
+    val window = Window(rectangle)
+    println(window.area()) // 5 * 10 = 50
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-delegation-properties" class="anchor" href="#delegation-properties" aria-hidden="true"></a><a href="https://kotlinlang.org/docs/delegated-properties.html">Delegation Properties</a></h3>
+<p><code>lazy</code> ➡️ the value is computed only on first access</p>
+<ul>
+<li>First call to <code>get()</code>
+<ul>
+<li>execute the lambda passed to lazy()</li>
+<li>remember the result</li>
+</ul>
+</li>
+<li>Subsequent calls to <code>get()</code>
+<ul>
+<li>simply return the remembered result</li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <p>Initialize with <code>lazy</code></p>
+<pre><code class="language-kotlin=">val lazyString: String by lazy {
+    println(&quot;Initialize my lazyString...&quot;)
+    &quot;Hello&quot;
+}
+
+fun main() {
+    println(lazyString) // execute the lambda passed to lazy(), and remember the result
+    // Initialize my lazyString...
+    // Hello
+
+    println(lazyString) // simply return the remembered result
+    // Hello
+}
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-instance-of-abstract-class" class="anchor" href="#instance-of-abstract-class" aria-hidden="true"></a>Instance of Abstract Class</h3>
+<pre><code class="language-kotlin=">abstract class MyAbstractString {
+    val myString = &quot;Hello&quot;
+}
+
+fun main() {
+    val myAbstractString = MyAbstractString() // Error: Cannot create an instance of an abstract class
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-object-of-anonymous-class" class="anchor" href="#object-of-anonymous-class" aria-hidden="true"></a>Object of Anonymous Class</h3>
+<pre><code class="language-kotlin=">abstract class MyAbstractString {
+    val myString = &quot;Hello&quot;
+}
+
+fun main() {
+    val myAbstractString = object : MyAbstractString() {} // object expressions extend `MyAbstractString`
+    println(myAbstractString.myString)
+}
+</code></pre>
+<p>➡️ Singleton</p>
+<p>➡️ <a href="https://kotlinlang.org/docs/object-declarations.html">Object Expression</a></p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-implicit-di-2" class="anchor" href="#implicit-di-2" aria-hidden="true"></a>Implicit DI</h3>
+<pre><code class="language-kotlin=">import other.model.*
+
+interface AuthorServiceOps {
+    suspend fun loadAuthors(): List&lt;Author&gt;
+}
+
+interface FileServiceOps {
+    suspend fun findFilesByAuthor(fileNames: List&lt;Author&gt;): List&lt;CustomFile&gt;
+}
+
+interface TagDBOps {
+    suspend fun findAll(): List&lt;Tag&gt;
+}
+
+class AuthorService : AuthorServiceOps {
+    override suspend fun loadAuthors(): List&lt;Author&gt; =
+        listOf(
+            Author(&quot;Scott Wlaschin&quot;),
+            Author(&quot;Calliope Mori&quot;)
+        )
+}
+
+class FileService : FileServiceOps {
+    override suspend fun findFilesByAuthor(fileNames: List&lt;Author&gt;): List&lt;CustomFile&gt; =
+        listOf(
+            CustomFile(
+                header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title(&quot;Domain Modeling Made Functional&quot;), Author(&quot;Scott Wlaschin&quot;))),
+                content = Content(&quot;The useful knowledge of Domain Modeling and design mindset.&quot;),
+                fileFormat = CustomFileFormat.DocumentFile(DocumentFileExtension(&quot;.pdf&quot;)),
+                name = FileName(&quot;Domain Modeling Made Functional&quot;)
+            ),
+            CustomFile(
+                header = CustomHeader(CustomMetadata(Tag.TYPE_C, Title(&quot;end of a life&quot;), Author(&quot;Calliope Mori&quot;))),
+                content = Content(&quot;A beautiful song.&quot;),
+                fileFormat = CustomFileFormat.MediaFile.AudioFile(AudioFileExtension(&quot;.mp3&quot;), BitRateKBitPerS(320)),
+                name = FileName(&quot;end of a life&quot;)
+            )
+        )
+}
+
+class TagRepository : TagDBOps {
+    override suspend fun findAll(): List&lt;Tag&gt; = Tag.values().toList()
+}
+
+abstract class Dependencies {
+    val authorService: AuthorServiceOps by lazy { AuthorService() }
+    val fileService: FileServiceOps by lazy { FileService() }
+    val tagRepository: TagDBOps by lazy { TagRepository() }
+}
+
+suspend fun Dependencies.findAllTags(): List&lt;Tag&gt; =
+    tagRepository.findAll()
+
+suspend fun Dependencies.loadAuthors(): List&lt;Author&gt; =
+    authorService.loadAuthors()
+
+suspend fun Dependencies.loadFiles(): List&lt;CustomFile&gt; {
+    val authors = authorService.loadAuthors()
+    val files = fileService.findFilesByAuthor(authors)
+    val tags = tagRepository.findAll()
+    return files.map {
+        CustomFile.header.metadata.tag.set(it, tags.first())
+        it.apply {  }
+    }
+}
+
+suspend fun main() { // Edge of the world
+    val deps = object : Dependencies() {}
+    val validTalks = deps.loadFiles()
+    println(validTalks)
+}
+</code></pre>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-abstract-class-vs-interface" class="anchor" href="#abstract-class-vs-interface" aria-hidden="true"></a><a href="https://mjmanaog.medium.com/kotlin-abstract-class-interface-b9c4caf22252">Abstract Class vs. Interface</a></h3>
+<p>Basically, an abstract can do what an interface can</p>
+<p>➡️ both subclass / implementation need to implement abstract function</p>
+<p>🤔 What is the difference?</p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-abstract-class" class="anchor" href="#abstract-class" aria-hidden="true"></a>Abstract Class</h3>
+<p>can have …</p>
+<ul>
+<li><strong>constructors</strong></li>
+<li>an <strong>init body</strong></li>
+<li>properties with given <strong>value</strong></li>
+</ul>
+
+            </section>
+        
+            <section >
+                <pre><code class="language-kotlin=">abstract class Shape {
+    lateinit var color: String
+
+    private val shapeColor: String
+        get() = color
+
+    init {
+        color = &quot;pink&quot;
+    }
+
+    fun defaultColor() {
+        println(&quot;The shape's default color is $shapeColor.&quot;)
+    }
+
+    abstract fun side(): Int
+    abstract fun computeArea(): Double
+    abstract fun computePerimeter(): Double
+}
+
+class Rectangle(var l: Int, var w: Int) : Shape() {
+    override fun side(): Int = 4
+    override fun computeArea(): Double = (w * l).toDouble()
+    override fun computePerimeter(): Double = (2 * (l + w)).toDouble()
+}
+
+fun main() {
+    val rect = Rectangle(2, 3)
+    println(&quot;Area: ${rect.computeArea()}&quot;)
+    println(&quot;Perimeter: ${rect.computePerimeter()}&quot;)
+    rect.defaultColor()
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p>➡️ Delegation for lazy initialization</p>
+<pre><code class="language-kotlin=">abstract class Dependencies {
+    val authorService: AuthorServiceOps by lazy { AuthorService() }
+    val fileService: FileServiceOps by lazy { FileService() }
+    val tagRepository: TagDBOps by lazy { TagRepository() }
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-interface-1" class="anchor" href="#interface-1" aria-hidden="true"></a>Interface</h3>
+<p>You only want to share behavior with the class but not the code between a set of objects</p>
+<pre><code class="language-kotlin=">interface Shape {
+    fun side(): Int
+    fun computeArea(): Double
+    fun computePerimeter(): Double
+    fun addColor(): String
+}
+
+class Rectangle(var l: Int, var w: Int) : Shape {
+    override fun side(): Int {
+        return 4
+    }
+
+    override fun computeArea(): Double {
+        return (w * l).toDouble()
+    }
+
+    override fun computePerimeter(): Double {
+        return (2 * (l + w)).toDouble()
+    }
+
+    override fun addColor(): String {
+        return &quot;red&quot;
+    }
+}
+
+fun main() {
+    val rect = Rectangle(2, 3)
+    println(&quot;Area: ${rect.computeArea()}&quot;)
+    println(&quot;Perimeter: ${rect.computePerimeter()}&quot;)
+    println(&quot;Color: ${rect.addColor()}&quot;)
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p>➡️ Set of operations for algebras</p>
+<pre><code class="language-kotlin=">interface FileDBOps {
+    suspend fun saveFile(file: CustomFile): CustomFile
+    suspend fun removeFile(fileName: FileName): FileName
+    suspend fun findFileByFileName(fileName: FileName): CustomFile
+    suspend fun findAll(): List&lt;CustomFile&gt;
+}
+</code></pre>
+<p>🔍 Program to an interface, not an implementation.</p>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-dependencies-in-testing" class="anchor" href="#dependencies-in-testing" aria-hidden="true"></a>Dependencies in Testing</h3>
+<p>Recap the Dependency Scoping</p>
+<pre><code class="language-kotlin=">// An example of an application wide scope for app wide dependencies.
+abstract class AppScope {
+    val httpClient: HttpClient by lazy { HttpClient() } // lazy initialization
+    val database: Database by lazy { Database() }
+    val logger: Logger by lazy { Logger() }
+}
+
+// Our application class
+object Application {
+    // Retained as singleton at an application level
+    val diScope = object : AppScope() {}
+}
+
+// Our service scope
+interface AuthorScope {
+    private val appScope: AppScope get() = Application.diScope
+    val authorNetworkService: AuthorNetworkOps get() = AutherNetworkService(appScope.httpClient) // algebra
+    val authorRepository: AuthorDBOps get() = AuthorRepository(appScope.database)// algebra
+}
+
+interface FileScope {
+    private val appScope: AppScope get() = Application.diScope
+    val fileNetworkService: FileNetworkOps get() = FileNetworkService(appScope.httpClient) // algebra
+    val fileRepository: FileDBOps get() = FileRepository(appScope.database)// algebra
+}
+
+interface TagScope {
+    private val appScope: AppScope get() = Application.diScope
+    val tagNetworkService: TagNetworkOps get() = TagNetworkService(appScope.httpClient) // algebra
+    val tagRepository: TagDBOps get() = TagRepository(appScope.database)// algebra
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p>Define scopes as interfaces or abstract classes for flexibility</p>
+<p>➡️ replace implementation in tests</p>
+<pre><code class="language-kotlin=">class AuthorService(private val diScope : AuthorScope = object : AuthorScope {}) {
+    suspend fun loadAuthors(): List&lt;Author&gt; =
+        diScope.authorNetworkService.loadAuthors()
+}
+</code></pre>
+
+            </section>
+        
+            <section >
+                <p>With algebras, we can override the dependencies we want to replace only</p>
+<pre><code class="language-kotlin=">class AuthorServiceTest {
+    private lateinit var authorService: AuthorService
+
+    @Before
+    fun setup() {
+        authorService = AuthorService(diScope = object : AuthorScope {
+            override val authorNetworkService: AuthorNetworkOps = MockAuthorNetworkService()
+            override val authorRepository: AuthorDBOps = MockAuthorRepository()
+        })
+    }
+
+    @Test
+    fun testLoadAuthors() = runBlocking {
+        val actual = authorService.loadAuthors()
+        Assertions.assertEquals(listOf(&quot;Joe&quot;, &quot;Mark&quot;), actual)
+    }
+}
+</code></pre>
+<p>➡️ Mock the dependencies and test without touching the real network or database</p>
+
+            </section>
+        
+            <section >
+                <p>Alternatively, use <a href="https://www.testcontainers.org/">Testcontainers</a>!</p>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-implications-of-fp-for-testing" class="anchor" href="#implications-of-fp-for-testing" aria-hidden="true"></a>Implications of FP for testing</h3>
+<ul>
+<li>Purity
+<ul>
+<li><font size="6">deterministic, predictable, no side effect</font></li>
+<li><font size="6">➡️ <strong>Remove flakiness</strong></font></li>
+</ul>
+</li>
+<li>Immutability
+<ul>
+<li><font size="6">no unexpected state changes</font></li>
+<li><font size="6">➡️ Test scenarios and assertions <strong>remain correct</strong></font></li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-implications-of-fp-for-testing-1" class="anchor" href="#implications-of-fp-for-testing-1" aria-hidden="true"></a>Implications of FP for testing</h3>
+<ul>
+<li>Functional domain modeling
+<ul>
+<li><font size="6">strict data validation (types + compiler)</font></li>
+<li><font size="6">➡️ Remove the need of tests for <strong>invariants</strong></font></li>
+</ul>
+</li>
+<li>And more
+<ul>
+<li><font size="6">error handling, ADT, implicit DI</font></li>
+<li><font size="6">➡️ <strong>Testability</strong>, <strong>Exhaustivity</strong></font></li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+
+    </section>
+    
+
+
+
+    
+    <section>
+        <section >
+            <h3><a id="user-content-recap-1" class="anchor" href="#recap-1" aria-hidden="true"></a>Recap #1</h3>
+<ul>
+<li>Pure Logic
+<ul>
+<li>describe <em>what to do</em></li>
+<li>push Side Effects to the <strong>Edges</strong></li>
+<li>implement at runtime (<em>how to consume</em>)</li>
+<li><code>IO</code> and <code>suspend</code> and logger</li>
+</ul>
+</li>
+<li>Algebras
+<ul>
+<li>ADTs + interpreter</li>
+<li>interface</li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+            <section >
+                <h3><a id="user-content-recap-2" class="anchor" href="#recap-2" aria-hidden="true"></a>Recap #2</h3>
+<ul>
+<li>Dependency Injection
+<ul>
+<li>via Extension Function</li>
+<li>pass dependencies <strong>implicitly</strong></li>
+<li>leave explicit arguments for payload</li>
+</ul>
+</li>
+<li>Dependency Scoping
+<ul>
+<li>delegation, object expression</li>
+<li><em>program to an interface, not an implementation</em></li>
+<li>replace implementation in tests</li>
+</ul>
+</li>
+</ul>
+
+            </section>
+        
+
+    </section>
     
 
 
