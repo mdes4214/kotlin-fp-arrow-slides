@@ -54,15 +54,9 @@ p {
 
 --
 
-### References #1
+### References
 
 - https://book.kotlincn.net/
-- https://kotest.io/
-
---
-
-### References #2
-
 - https://softwareengineering.stackexchange.com/questions/275891/is-functional-programming-a-viable-alternative-to-dependency-injection-patterns
 
 ---
