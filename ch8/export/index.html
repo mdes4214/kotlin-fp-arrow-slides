@@ -474,8 +474,8 @@ p {
 <li>let the statement return a value of <code>IO&lt;T&gt;</code></li>
 <li>lift the function ➡️ defer side effects</li>
 </ul>
-<pre><code class="language-kotlin=">fun findAuthors(): IO&lt;List&lt;Speaker&gt;&gt; = IO {
-  authorNetworkService.findAuthors()
+<pre><code class="language-kotlin=">fun loadAuthors(): IO&lt;List&lt;Author&gt;&gt; = IO {
+  authorNetworkService.loadAuthors()
 }
 </code></pre>
 
@@ -497,8 +497,8 @@ p {
 <li>The value you’re returning is a description of an effect</li>
 <li>➡️ not performing the effect itself unless you provide the <strong>mentioned environment</strong></li>
 </ul>
-<pre><code class="language-kotlin=">suspend fun findAuthors() =
-  authorNetworkService.findAuthors()
+<pre><code class="language-kotlin=">suspend fun loadAuthors() =
+  authorNetworkService.loadAuthors()
 </code></pre>
 
             </section>
@@ -763,7 +763,7 @@ suspend fun Dependencies.findAllTags(): List&lt;Tag&gt; =
 suspend fun Dependencies.loadAuthors(): List&lt;Author&gt; =
     authorService.loadAuthors()
 
-suspend fun Dependencies.loadFiles(): List&lt;CustomFile&gt; {
+suspend fun Dependencies.loadFilesAndUpdateTag(): List&lt;CustomFile&gt; {
     val authors = loadAuthors()
     val files = fileService.findFilesByAuthor(authors)
     val tags = findAllTags()
@@ -779,8 +779,8 @@ suspend fun Dependencies.loadFiles(): List&lt;CustomFile&gt; {
                 <p>Only pass dependencies on the first call.</p>
 <pre><code class="language-kotlin=">suspend fun main() { // Edge of the world
     val deps = Dependencies(AuthorService(), FileService(), TagRepository())
-    val validTalks = deps.loadFiles()
-    println(validTalks)
+    val files = deps.loadFilesAndUpdateTag()
+    println(files)
 }
 </code></pre>
 <p>🔍 Extension functions are resolved statically, hence this approach is compile time checked.</p>
@@ -844,7 +844,7 @@ suspend fun Dependencies.findAllTags(): List&lt;Tag&gt; =
 suspend fun Dependencies.loadAuthors(): List&lt;Author&gt; =
     authorService.loadAuthors()
 
-suspend fun Dependencies.loadFiles(): List&lt;CustomFile&gt; {
+suspend fun Dependencies.loadFilesAndUpdateTag(): List&lt;CustomFile&gt; {
     val authors = loadAuthors()
     val files = fileService.findFilesByAuthor(authors)
     val tags = findAllTags()
@@ -855,8 +855,8 @@ suspend fun Dependencies.loadFiles(): List&lt;CustomFile&gt; {
 
 suspend fun main() { // Edge of the world
     val deps = Dependencies(AuthorService(), FileService(), TagRepository())
-    val validTalks = deps.loadFiles()
-    println(validTalks)
+    val files = deps.loadFilesAndUpdateTag()
+    println(files)
 }
 </code></pre>
 
@@ -1139,7 +1139,7 @@ suspend fun Dependencies.findAllTags(): List&lt;Tag&gt; =
 suspend fun Dependencies.loadAuthors(): List&lt;Author&gt; =
     authorService.loadAuthors()
 
-suspend fun Dependencies.loadFiles(): List&lt;CustomFile&gt; {
+suspend fun Dependencies.loadFilesAndUpdateTag(): List&lt;CustomFile&gt; {
     val authors = loadAuthors()
     val files = fileService.findFilesByAuthor(authors)
     val tags = findAllTags()
@@ -1150,8 +1150,8 @@ suspend fun Dependencies.loadFiles(): List&lt;CustomFile&gt; {
 
 suspend fun main() { // Edge of the world
     val deps = object : Dependencies() {}
-    val validTalks = deps.loadFiles()
-    println(validTalks)
+    val files = deps.loadFilesAndUpdateTag()
+    println(files)
 }
 </code></pre>
 

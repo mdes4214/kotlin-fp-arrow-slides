@@ -155,8 +155,8 @@ In functional programming, there is a `IO` type
 - lift the function ➡️ defer side effects
 
 ```kotlin=
-fun findAuthors(): IO<List<Speaker>> = IO {
-  authorNetworkService.findAuthors()
+fun loadAuthors(): IO<List<Author>> = IO {
+  authorNetworkService.loadAuthors()
 }
 ```
 
@@ -176,8 +176,8 @@ fun findAuthors(): IO<List<Speaker>> = IO {
 - ➡️ not performing the effect itself unless you provide the **mentioned environment**
 
 ```kotlin=
-suspend fun findAuthors() =
-  authorNetworkService.findAuthors()
+suspend fun loadAuthors() =
+  authorNetworkService.loadAuthors()
 ```
 
 --
@@ -394,7 +394,7 @@ suspend fun Dependencies.findAllTags(): List<Tag> =
 suspend fun Dependencies.loadAuthors(): List<Author> =
     authorService.loadAuthors()
 
-suspend fun Dependencies.loadFiles(): List<CustomFile> {
+suspend fun Dependencies.loadFilesAndUpdateTag(): List<CustomFile> {
     val authors = loadAuthors()
     val files = fileService.findFilesByAuthor(authors)
     val tags = findAllTags()
@@ -411,8 +411,8 @@ Only pass dependencies on the first call.
 ```kotlin=
 suspend fun main() { // Edge of the world
     val deps = Dependencies(AuthorService(), FileService(), TagRepository())
-    val validTalks = deps.loadFiles()
-    println(validTalks)
+    val files = deps.loadFilesAndUpdateTag()
+    println(files)
 }
 ```
 
@@ -477,7 +477,7 @@ suspend fun Dependencies.findAllTags(): List<Tag> =
 suspend fun Dependencies.loadAuthors(): List<Author> =
     authorService.loadAuthors()
 
-suspend fun Dependencies.loadFiles(): List<CustomFile> {
+suspend fun Dependencies.loadFilesAndUpdateTag(): List<CustomFile> {
     val authors = loadAuthors()
     val files = fileService.findFilesByAuthor(authors)
     val tags = findAllTags()
@@ -488,8 +488,8 @@ suspend fun Dependencies.loadFiles(): List<CustomFile> {
 
 suspend fun main() { // Edge of the world
     val deps = Dependencies(AuthorService(), FileService(), TagRepository())
-    val validTalks = deps.loadFiles()
-    println(validTalks)
+    val files = deps.loadFilesAndUpdateTag()
+    println(files)
 }
 ```
 
@@ -753,7 +753,7 @@ suspend fun Dependencies.findAllTags(): List<Tag> =
 suspend fun Dependencies.loadAuthors(): List<Author> =
     authorService.loadAuthors()
 
-suspend fun Dependencies.loadFiles(): List<CustomFile> {
+suspend fun Dependencies.loadFilesAndUpdateTag(): List<CustomFile> {
     val authors = loadAuthors()
     val files = fileService.findFilesByAuthor(authors)
     val tags = findAllTags()
@@ -764,8 +764,8 @@ suspend fun Dependencies.loadFiles(): List<CustomFile> {
 
 suspend fun main() { // Edge of the world
     val deps = object : Dependencies() {}
-    val validTalks = deps.loadFiles()
-    println(validTalks)
+    val files = deps.loadFilesAndUpdateTag()
+    println(files)
 }
 ```
 
