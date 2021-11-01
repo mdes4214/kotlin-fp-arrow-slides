@@ -395,9 +395,9 @@ suspend fun Dependencies.loadAuthors(): List<Author> =
     authorService.loadAuthors()
 
 suspend fun Dependencies.loadFiles(): List<CustomFile> {
-    val authors = authorService.loadAuthors()
+    val authors = loadAuthors()
     val files = fileService.findFilesByAuthor(authors)
-    val tags = tagRepository.findAll()
+    val tags = findAllTags()
     return files.map {
         CustomFile.header.metadata.tag.set(it, tags.first())
     }
@@ -478,9 +478,9 @@ suspend fun Dependencies.loadAuthors(): List<Author> =
     authorService.loadAuthors()
 
 suspend fun Dependencies.loadFiles(): List<CustomFile> {
-    val authors = authorService.loadAuthors()
+    val authors = loadAuthors()
     val files = fileService.findFilesByAuthor(authors)
-    val tags = tagRepository.findAll()
+    val tags = findAllTags()
     return files.map {
         CustomFile.header.metadata.tag.set(it, tags.first())
     }
@@ -754,9 +754,9 @@ suspend fun Dependencies.loadAuthors(): List<Author> =
     authorService.loadAuthors()
 
 suspend fun Dependencies.loadFiles(): List<CustomFile> {
-    val authors = authorService.loadAuthors()
+    val authors = loadAuthors()
     val files = fileService.findFilesByAuthor(authors)
-    val tags = tagRepository.findAll()
+    val tags = findAllTags()
     return files.map {
         CustomFile.header.metadata.tag.set(it, tags.first())
     }
