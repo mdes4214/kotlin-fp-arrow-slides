@@ -1145,7 +1145,6 @@ suspend fun Dependencies.loadFiles(): List&lt;CustomFile&gt; {
     val tags = tagRepository.findAll()
     return files.map {
         CustomFile.header.metadata.tag.set(it, tags.first())
-        it.apply {  }
     }
 }
 
