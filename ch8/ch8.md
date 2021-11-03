@@ -890,7 +890,9 @@ interface FileDBOps {
 }
 ```
 
-🔍 Program to an interface, not an implementation.
+--
+
+🔍 Program to an interface (or abstract class), not an implementation.
 
 ---
 
@@ -968,6 +970,8 @@ class AuthorServiceTest {
     }
 }
 ```
+
+--
 
 ➡️ Mock the dependencies and test without touching the real network or database
 
