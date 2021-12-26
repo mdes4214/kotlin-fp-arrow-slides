@@ -592,16 +592,14 @@ typealias ValidatedNel<E, A> = Validated<NonEmptyList<E>, A>
 fun validateTag(tag: String): ValidatedNel<Error.ValidationError, Tag> =
     if (!Tag.values().any { it.name == tag }) {
         Error.ValidationError("Tag is invalid").invalidNel()
-    }
-    else {
+    } else {
         Tag.valueOf(tag).validNel()
     }
 
 fun validateTitle(title: String): ValidatedNel<Error.ValidationError, Title> =
     if (title.isBlank()) {
         Error.ValidationError("Title cannot be blank").invalidNel()
-    }
-    else {
+    } else {
         Title(title).validNel()
     }
 
@@ -636,16 +634,14 @@ sealed class Error {
 fun validateTag(tag: String): ValidatedNel<Error.ValidationError, Tag> =
     if (!Tag.values().any { it.name == tag }) {
         Error.ValidationError("Tag is invalid").invalidNel()
-    }
-    else {
+    } else {
         Tag.valueOf(tag).validNel()
     }
 
 fun validateTitle(title: String): ValidatedNel<Error.ValidationError, Title> =
     if (title.isBlank()) {
         Error.ValidationError("Title cannot be blank").invalidNel()
-    }
-    else {
+    } else {
         Title(title).validNel()
     }
 

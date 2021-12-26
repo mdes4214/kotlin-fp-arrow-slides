@@ -924,16 +924,14 @@ typealias ValidatedNel&lt;E, A&gt; = Validated&lt;NonEmptyList&lt;E&gt;, A&gt;
 <pre><code class="language-kotlin=">fun validateTag(tag: String): ValidatedNel&lt;Error.ValidationError, Tag&gt; =
     if (!Tag.values().any { it.name == tag }) {
         Error.ValidationError(&quot;Tag is invalid&quot;).invalidNel()
-    }
-    else {
+    } else {
         Tag.valueOf(tag).validNel()
     }
 
 fun validateTitle(title: String): ValidatedNel&lt;Error.ValidationError, Title&gt; =
     if (title.isBlank()) {
         Error.ValidationError(&quot;Title cannot be blank&quot;).invalidNel()
-    }
-    else {
+    } else {
         Title(title).validNel()
     }
 
@@ -967,16 +965,14 @@ sealed class Error {
 fun validateTag(tag: String): ValidatedNel&lt;Error.ValidationError, Tag&gt; =
     if (!Tag.values().any { it.name == tag }) {
         Error.ValidationError(&quot;Tag is invalid&quot;).invalidNel()
-    }
-    else {
+    } else {
         Tag.valueOf(tag).validNel()
     }
 
 fun validateTitle(title: String): ValidatedNel&lt;Error.ValidationError, Title&gt; =
     if (title.isBlank()) {
         Error.ValidationError(&quot;Title cannot be blank&quot;).invalidNel()
-    }
-    else {
+    } else {
         Title(title).validNel()
     }
 
